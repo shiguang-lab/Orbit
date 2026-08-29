@@ -130,13 +130,11 @@ RUN test -f package-lock.json \
 # tls-client-node (claude-web/grok-web/lmarena/perplexity-web TLS
 # impersonation) hits the same --ignore-scripts wall: its own postinstall.js
 # fetches a platform .so/.dylib/.dll from the bogdanfinn/tls-client GitHub
-# Releases API and is never invoked when npm ci skips lifecycle scripts. Unlike
-# better-sqlite3 above, that script never throws on failure — it only
-# `console.warn`s and exits 0 — so a rate-limited or offline build would
-# otherwise succeed silently with an empty bin/ and only fail at first request
-# in production (TlsClientUnavailableError, #7802). Run it explicitly here so
-# a broken/rate-limited fetch fails the BUILD loudly instead of shipping a
-# broken image.
+# Releases API and is never invoked when npm ci skips lifecycle scripts. The
+# builder intentionally does not run that network download: the pinned source
+# stage above produces the native library with patched Go, and the COPY below
+# installs it deterministically. A missing output still fails the build before
+# the application bundle is produced.
 RUN --mount=type=cache,id=s/92ca8a61-c1ba-421f-a389-d48ac7258c2d-npm-cache,target=/root/.npm \
   npm ci --include=optional --no-audit --no-fund --legacy-peer-deps --ignore-scripts \
   && (cd node_modules/better-sqlite3 \
