@@ -49,6 +49,9 @@ interface ModelsBody {
 
 // provider → the upstream /models URL the route resolves from its registry baseUrl.
 const LIVE_CASES: Array<{ provider: string; liveUrl: string; source?: string }> = [
+  // Fork regression: the built-in nara provider previously skipped live discovery and
+  // always returned its local seed even though the registry exposes a /v1/models endpoint.
+  { provider: "nara", liveUrl: "https://router.bynara.id/v1/models" },
   { provider: "venice", liveUrl: "https://api.venice.ai/api/v1/models" },
   { provider: "deepinfra", liveUrl: "https://api.deepinfra.com/v1/openai/models" },
   { provider: "wandb", liveUrl: "https://api.inference.wandb.ai/v1/models" },

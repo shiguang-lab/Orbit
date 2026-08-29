@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# 分叉度 KPI 报告（fork-sync-kit）—— 方案见 OMNIROUTE_FORK_SYNC_CN.md §3.4
+# 分叉度 KPI 报告（fork-sync-kit）—— 方案见 OMNIROUTE_FORK_SYNC_CN.md §3.5
 #
 # 用法:
 #   divergence_report.sh <base-ref> [<head-ref>] [--out <file>]
@@ -57,7 +57,7 @@ alert=""
 if [[ ${#up_files[@]} -gt $TH_FILES ]]; then
   alert+="
 
-> ⚠️ 告警：触碰上游文件 ${#up_files[@]} 超过阈值 ${TH_FILES}，该区域需要造缝或加大回流（方案 §3.4）。"
+> ⚠️ 告警：触碰上游文件 ${#up_files[@]} 超过阈值 ${TH_FILES}，该区域需要造缝或加大回流（方案 §3.5）。"
 fi
 if [[ $omni_count -gt $TH_PATCHES ]]; then
   alert+="

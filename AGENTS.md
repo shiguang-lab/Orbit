@@ -328,6 +328,28 @@ Documentation must describe verified behavior, not plausible behavior.
 4. Run `npm run check:docs-all` for edits under `docs/`; it includes the fabricated-docs
    validation.
 
+### Fork change governance
+
+`FORK_TODO_CN.md` is the living ledger for behavior that exists only in this fork. Every
+fork-only feature, behavior change, bug fix, or release/deployment behavior change MUST update
+that ledger in the same commit or PR as the implementation. A code comment, commit message,
+`CHANGELOG.md` fragment, or `fork-sync-kit/PATCHES.tsv` row is not a substitute for the ledger.
+
+Each active ledger entry must record a stable ID, change type and status, user-visible behavior
+or acceptance criteria, affected files and `[OMNI]` patch IDs, its upstream-sync merge rule, the
+automated regression tests and exact commands, any required live verification, and the last
+upstream version on which it passed. Changes to upstream-owned files must also be registered in
+`fork-sync-kit/PATCHES.tsv`; one ledger entry may own multiple patch rows.
+
+Before accepting an upstream sync, review every active ledger entry for overlap with upstream,
+apply its recorded merge rule, run its focused regression commands, then run the global test
+command configured in `fork-sync-kit/sync.conf`. Record the result and tested upstream version in
+the sync report and ledger. A sync must not be accepted or published while an active entry is
+undocumented, its merge disposition
+is unresolved, or its required regression is red. If upstream replaces a fork change, remove the
+obsolete local patch and mark the ledger entry as upstreamed/retired instead of deleting its
+history. See `OMNIROUTE_FORK_SYNC_CN.md` §3.4.
+
 ---
 
 ## Common Modification Scenarios
@@ -703,6 +725,11 @@ the stale-enforcement added in Fase 6A.3.
     VERBATIM no prompt de todo subagente que toque git; (e) se `_tasks` aparecer como symlink
     quebrado, NÃO commitar nada — restaurar do remote e avisar o operador. O gate
     `check:tracked-artifacts` (pre-commit + CI) bloqueia `_tasks` rastreado em qualquer forma.
+24. Every fork-only feature, behavior change, bug fix, or release/deployment behavior change MUST
+    update `FORK_TODO_CN.md` in the same commit or PR, including its merge rule and executable
+    regression coverage. An upstream sync cannot be accepted or published until every active
+    ledger entry has a resolved merge disposition and its focused regressions plus the configured
+    global test command pass. See Fork change governance and `OMNIROUTE_FORK_SYNC_CN.md` §3.4.
 
 ---
 
