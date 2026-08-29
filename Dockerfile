@@ -56,6 +56,29 @@ RUN set -eux; \
   npm --version; \
   npm cache clean --force
 
+# tls-client-node@0.2.0 downloads a prebuilt shared library from the upstream
+# release. That artifact is currently compiled with Go 1.24.1 and contains the
+# fixable CRITICAL CVE-2025-68121 in crypto/tls. Rebuild the same pinned upstream
+# cffi wrapper with Go 1.24.13 during the image build so every target architecture
+# carries the patched standard library without changing the application dependency
+# or its TLS-client API version.
+FROM golang:1.24.13-bookworm AS tls-client-builder
+ARG TARGETARCH
+ADD --checksum=sha256:85f68f43bfa31462b89d32d82ff9fe46c48c39c7486ce72a71ab3a36778f23c1 \
+  https://codeload.github.com/bogdanfinn/tls-client/tar.gz/9921aa67ac94a61f66e7c0deeffb842371f09f9d \
+  /tmp/tls-client.tar.gz
+RUN set -eux; \
+  mkdir -p /src /out; \
+  tar -xzf /tmp/tls-client.tar.gz --strip-components=1 -C /src; \
+  case "$TARGETARCH" in \
+    amd64) output=/out/tls-client-linux-ubuntu-amd64-1.15.1.so ;; \
+    arm64) output=/out/tls-client-linux-arm64-1.15.1.so ;; \
+    *) echo "Unsupported Docker architecture: $TARGETARCH" >&2; exit 1 ;; \
+  esac; \
+  CGO_ENABLED=1 GOOS=linux GOARCH="$TARGETARCH" \
+    go build -C /src/cffi_dist -buildmode=c-shared -trimpath -buildvcs=false \
+      -ldflags=-buildid= -o "$output"
+
 # ── Builder ────────────────────────────────────────────────────────────────
 FROM base AS builder
 
@@ -118,10 +141,12 @@ RUN --mount=type=cache,id=s/92ca8a61-c1ba-421f-a389-d48ac7258c2d-npm-cache,targe
   npm ci --include=optional --no-audit --no-fund --legacy-peer-deps --ignore-scripts \
   && (cd node_modules/better-sqlite3 \
       && node /usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild) \
-  && node -e "require('better-sqlite3')(':memory:').close()" \
-  && node node_modules/tls-client-node/scripts/postinstall.js \
-  && (test -n "$(find node_modules/tls-client-node/bin -mindepth 1 -print -quit 2>/dev/null)" \
-      || (echo "tls-client-node native binary missing after postinstall — GitHub API fetch likely rate-limited or failed (#7802)" >&2 && exit 1))
+  && node -e "require('better-sqlite3')(':memory:').close()"
+
+# Use the reproducibly rebuilt, Go-patched library instead of the vulnerable
+# prebuilt release asset downloaded by tls-client-node's postinstall script.
+COPY --from=tls-client-builder /out/ /app/node_modules/tls-client-node/bin/
+RUN test -n "$(find node_modules/tls-client-node/bin -mindepth 1 -print -quit 2>/dev/null)"
 
 # Build with Turbopack (stable in Next 16, the repo default). The v3.8.27-era
 # TurbopackInternalError panic ("entered unreachable code: there must be a path to a

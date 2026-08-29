@@ -22,6 +22,25 @@ test("Dockerfile's --ignore-scripts npm ci is compensated for tls-client-node's 
 
   assert.match(
     dockerfile,
+    /FROM golang:1\.24\.13-bookworm AS tls-client-builder[\s\S]*?--checksum=sha256:[0-9a-f]{64}[\s\S]*?codeload\.github\.com\/bogdanfinn\/tls-client[\s\S]*?go build -C \/src\/cffi_dist -buildmode=c-shared/,
+    "the Docker image must rebuild the pinned tls-client wrapper with patched Go and a " +
+      "content-addressed upstream source archive"
+  );
+
+  assert.match(
+    dockerfile,
+    /COPY --from=tls-client-builder \/out\/ \/app\/node_modules\/tls-client-node\/bin\//,
+    "the image must install the rebuilt native TLS library instead of the vulnerable release asset"
+  );
+
+  assert.doesNotMatch(
+    dockerfile,
+    /node node_modules\/tls-client-node\/scripts\/postinstall\.js/,
+    "the image must not download the vulnerable prebuilt tls-client release during build"
+  );
+
+  assert.match(
+    dockerfile,
     /better-sqlite3[\s\S]*node-gyp\.js rebuild/,
     "expected an explicit better-sqlite3 rebuild step after --ignore-scripts"
   );
