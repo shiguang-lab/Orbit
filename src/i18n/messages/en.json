@@ -5726,6 +5726,8 @@
     "enterpriseCloud": "Enterprise & Cloud",
     "apiFormatLabel": "Api Format Label",
     "apiKeyOptionalHint": "Leave empty if your local setup or provider does not require authentication.",
+    "refreshTokenOptionalLabel": "Refresh Token (optional)",
+    "refreshTokenOptionalHint": "Optional — enables automatic token renewal when the provider supports it.",
     "apiKeyOptionalLabel": "API Key (optional)",
     "apiRegionChina": "Api Region China",
     "apiRegionHint": "Api Region Hint",

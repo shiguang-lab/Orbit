@@ -18,6 +18,16 @@ export type WebSessionCredentialRequirement =
       /** Provider-specific replacement for the generic four-step DevTools guide. */
       guideSteps?: readonly string[];
       guideNote?: string;
+      /**
+       * [OMNI] kimi-web-refresh-ui — the provider's executor renews its access token
+       * from a manually supplied refresh_token (rotating). Declared here so the
+       * connection modals can render an optional Refresh Token input next to the
+       * pasted session credential, instead of forcing operators to write the value
+       * through the management API after creation.
+       */
+      refreshToken?: {
+        placeholder?: string;
+      };
     }
   | {
       kind: "none";
@@ -223,6 +233,11 @@ export const WEB_SESSION_CREDENTIAL_REQUIREMENTS = {
     placeholder: "access_token from www.kimi.com localStorage",
     acceptsFullCookieHeader: true,
     storageKeys: ["token", "access_token", "accessToken", "cookie", "kimi-auth"],
+    // [OMNI] kimi-web-refresh-ui — Kimi rotates the refresh_token on every renewal;
+    // the current valid value only lives in the instance database after a refresh.
+    refreshToken: {
+      placeholder: "refresh_token from www.kimi.com localStorage (enables auto-renewal)",
+    },
   },
   "doubao-web": {
     kind: "cookie",

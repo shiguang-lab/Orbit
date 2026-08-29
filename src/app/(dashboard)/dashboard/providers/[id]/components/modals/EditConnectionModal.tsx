@@ -117,6 +117,7 @@ export default function EditConnectionModal({
     maxWaitMs: "",
     rateLimitMaxConcurrent: "",
     apiKey: "",
+    refreshToken: "", // [OMNI] kimi-web-refresh-ui
     healthCheckInterval: 60,
     baseUrl: "",
     targetFormat: "",
@@ -336,6 +337,7 @@ export default function EditConnectionModal({
             ? String(connection.rateLimitOverrides.maxConcurrent)
             : "",
         apiKey: "",
+        refreshToken: "", // [OMNI] kimi-web-refresh-ui
         healthCheckInterval: connection.healthCheckInterval ?? 60,
         baseUrl: existingBaseUrl || defaultBaseUrl,
         targetFormat: existingTargetFormat || "",
@@ -355,6 +357,8 @@ export default function EditConnectionModal({
             connection.providerSpecificData?.excluded_models
         ),
         customUserAgent: existingCustomUserAgent,
+        refreshToken:
+          (connection.providerSpecificData?.refreshToken as string) || "", // [OMNI] kimi-web-refresh-ui
         accountId: existingAccountId,
         codexReasoningEffort: codexRequestDefaults.reasoningEffort,
         codexServiceTier: codexRequestDefaults.serviceTier ?? "default",
@@ -663,6 +667,10 @@ export default function EditConnectionModal({
           ...(validationPsd || {}),
           ...(isCodex ? { codexFingerprintMode: null, codex_fingerprint_mode: null } : {}),
         };
+        // [OMNI] kimi-web-refresh-ui — write back an operator-supplied refresh_token;
+        // empty input clears it (the executor then falls back to access-token-only).
+        updates.providerSpecificData.refreshToken =
+          formData.refreshToken.trim() || undefined;
         assignEditApiKeyProviderSpecificData({
           provider,
           formData,
@@ -1024,6 +1032,21 @@ export default function EditConnectionModal({
                   </Button>
                 </div>
               </div>
+            )}
+            {/* [OMNI] kimi-web-refresh-ui — optional refresh_token input; the
+                executor renews the access token from it on 401 / before expiry. */}
+            {webSessionCredential?.refreshToken && (
+              <Input
+                label={t("refreshTokenOptionalLabel")}
+                type="password"
+                value={formData.refreshToken}
+                onChange={(e) => setFormData({ ...formData, refreshToken: e.target.value })}
+                placeholder={webSessionCredential.refreshToken.placeholder}
+                hint={t("refreshTokenOptionalHint")}
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="off"
+              />
             )}
             {isChatGptWebCodex && (
               <div className="space-y-3 rounded-lg border border-border bg-surface/40 p-3">

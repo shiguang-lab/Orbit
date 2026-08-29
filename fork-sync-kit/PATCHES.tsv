@@ -1,0 +1,7 @@
+# OmniRoute 本地补丁登记表（fork-sync-kit）—— 6 列 TAB 分隔：
+# id <TAB> 说明 <TAB> 文件路径 <TAB> 本地锚点(egrep) <TAB> 上游已修复判定(egrep,空=无法判定) <TAB> upstreamable(是/否/已提/已合)
+# 登记过的文件同时进入 AI 分诊保护清单（AI 不碰）。id 与代码注释 [OMNI] <id> 对应。
+nara-model-set	内置 nara 加入 OpenAI 兼容实时模型发现集合	src/app/api/providers/[id]/models/discovery/providerSets.ts	\[OMNI\] nara-model-set	nara	是
+nara-registry-models-url	nara registry 条目补充 modelsUrl（实时发现端点）	open-sse/config/providers/registry/nara/index.ts	\[OMNI\] nara-registry-models-url	modelsUrl	是
+models-route-fallback-log	模型发现回退分支补排障日志（console.warn）	src/app/api/providers/[id]/models/route.ts	\[OMNI\] models-route-fallback-log		否
+kimi-web-refresh-ui	kimi-web 连接弹窗支持 refreshToken 输入并存入 providerSpecificData（含类型/两个弹窗/i18n）	src/shared/providers/webSessionCredentials.ts	\[OMNI\] kimi-web-refresh-ui	refreshToken	是

@@ -11,6 +11,9 @@ import { buildOpenAiCompatibleRegistryEntry } from "../../shared.ts";
 export const naraProvider: RegistryEntry = buildOpenAiCompatibleRegistryEntry({
   id: "nara",
   baseUrl: "https://router.bynara.id/v1/chat/completions",
+  // [OMNI] nara-registry-models-url — live catalog endpoint for Import Models;
+  // the seed below stays as the offline fallback.
+  modelsUrl: "https://router.bynara.id/v1/models",
   models: [
     { id: "tencent-hy3", name: "Tencent Hy3", contextLength: 1000000 },
     { id: "mistral-large", name: "Mistral Large", contextLength: 252000, toolCalling: true },

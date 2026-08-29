@@ -345,6 +345,13 @@ export async function GET(
         localWarning?: string;
       }
     ) => {
+      // [OMNI] models-route-fallback-log — degrade-to-local-catalog used to swallow
+      // the underlying network error, leaving no trace when debugging why a provider
+      // keeps serving its seed instead of the live /models list.
+      console.warn(
+        `[OMNI] live model discovery failed for provider=${provider}; degrading to cached/local catalog`,
+        error instanceof Error ? `${error.name}: ${error.message}` : error,
+      );
       // #6267 — a models-endpoint redirect (307/308) is not a fixable-config
       // error. safeOutboundFetch throws REDIRECT_BLOCKED which
       // getSafeOutboundFetchErrorStatus maps to 503, but unlike the other 503

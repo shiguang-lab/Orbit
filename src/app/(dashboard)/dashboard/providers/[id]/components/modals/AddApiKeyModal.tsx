@@ -141,6 +141,7 @@ export default function AddApiKeyModal({
     tunnelId: "",
     runtimeKey: "",
     connectorName: "OmniRoute Codex",
+    refreshToken: "", // [OMNI] kimi-web-refresh-ui — optional refresh_token input
   });
   const [validating, setValidating] = useState(false);
   const [validationResult, setValidationResult] = useState(null);
@@ -400,6 +401,12 @@ export default function AddApiKeyModal({
         ...(providerSpecificData || {}),
         ...(validatedProviderSpecificData || {}),
       };
+      // [OMNI] kimi-web-refresh-ui — persist an operator-supplied refresh_token so the
+      // executor's renewal loop (kimi-web reads providerSpecificData.refreshToken) can
+      // rotate the access token without a management-API patch after creation.
+      if (webSessionCredential?.refreshToken && formData.refreshToken.trim()) {
+        mergedProviderSpecificData.refreshToken = formData.refreshToken.trim();
+      }
 
       const encodedCredential = isChatGptWebCodex
         ? JSON.stringify({
@@ -821,6 +828,21 @@ export default function AddApiKeyModal({
                 </div>
               );
             })()}
+            {/* [OMNI] kimi-web-refresh-ui — optional refresh_token input for providers
+                whose executor renews the access token from it (e.g. kimi-web). */}
+            {webSessionCredential?.refreshToken && (
+              <Input
+                label={t("refreshTokenOptionalLabel")}
+                type="password"
+                value={formData.refreshToken}
+                onChange={(e) => setFormData({ ...formData, refreshToken: e.target.value })}
+                placeholder={webSessionCredential.refreshToken.placeholder}
+                hint={t("refreshTokenOptionalHint")}
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="off"
+              />
+            )}
             {isChatGptWebCodex && (
               <div className="space-y-3 rounded-lg border border-border bg-surface/40 p-3">
                 <div>

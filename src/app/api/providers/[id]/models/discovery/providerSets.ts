@@ -100,6 +100,11 @@ export const NAMED_OPENAI_STYLE_PROVIDERS = new Set([
   // (11 chat-capable). Live fetch keeps it fresh; the registry seed stays as the
   // offline fallback.
   "logfare",
+  // [OMNI] nara-model-set — same class as #3976 / the 2026-06-19 sweep: the built-in
+  // NaraRouter (router.bynara.id) exposes a live keyed `/v1/models` catalog, but was
+  // unclassified, so Import Models never issued a network request and always served
+  // the hardcoded 3-model seed. The registry entry also carries modelsUrl now.
+  "nara",
 ]);
 
 export function isNamedOpenAIStyleProvider(provider: string): boolean {

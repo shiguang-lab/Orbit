@@ -1,0 +1,40 @@
+# OmniRoute 本地同步配置 —— 复制为同目录 sync.conf 后按实际填写
+# 方案见 OMNIROUTE_FORK_SYNC_CN.md §10。sync.sh / release.sh 共用本文件。
+
+# ---- 上游（必填）----
+# 上游官方仓库（只读；本地执行 fetch，不依赖 GitHub 上的任何工作流）
+UPSTREAM_URL="https://github.com/diegosouzapw/OmniRoute.git"
+# 上游 release tag 前缀（官方为 release/v3.8.51 这类）
+UPSTREAM_TAG_PREFIX="release/v"
+
+# ---- 同步策略 ----
+# patch 版本（同 major.minor）且无剩余冲突、测试通过时，是否自动接受并发布。
+# 演练 2~3 个版本无误后再改 true；minor/major 永远人工确认。
+AUTO_ACCEPT_PATCH="false"
+# 接受同步后自动推送 main 与 synced/vendor 标签到 fork 自己的远端（origin）。
+# sync.sh 会先预检：本地 main 落后 origin/main 时拒绝同步，须先 git pull --ff-only。
+PUSH_AFTER_ACCEPT="true"
+# 合入后的本地验证命令（无 GitHub CI，这就是唯一的质量闸门，强烈建议配置）
+# 示例：TEST_CMD="npm ci --no-audit && npm run build && npm test -- --run"
+TEST_CMD=""
+
+# ---- AI（可选，OpenAI 兼容网关；不配则冲突全部留人工）----
+AI_API_BASE="https://open.bigmodel.cn/api/paas/v4"
+AI_API_KEY=""
+AI_MODEL="glm-4.6"
+
+# ---- 构建发布（release.sh 使用；合入后本地构建 → 推 model.publib.cn → NAS 更新）----
+OMNI_REGISTRY="model.publib.cn"
+OMNI_IMAGE_PATH="local/omniroute-qodercli"
+# 镜像 tag 后缀：最终 tag = {registry}/{path}:{上游版本号}-{后缀}
+# 例：3.8.52-qodercli-1.1.34-r1（按你们现有命名规则维护，本地 rev 变更时手动改这里）
+OMNI_IMAGE_TAG_SUFFIX="qodercli-1.1.34-r1"
+# NAS 更新（可选；不配则 release.sh 只构建/推送，并打印手工更新步骤）
+# UGREEN NAS 的 SSH 对 /volume1 绝对路径有限制，详见 deploy/nas/AGENT_DEPLOY.md
+NAS_SSH_HOST=""
+NAS_DIR="/volume1/docker/omniroute"
+NAS_HEALTH_URL="http://127.0.0.1:20128/healthz"
+
+# ---- 通知（可选）----
+# 企业微信/钉钉等机器人 webhook，每次同步结束 POST 一条结果摘要；留空则只写本地报告
+SYNC_WEBHOOK_URL=""
