@@ -88,6 +88,9 @@ function* walkFiles(root, current = root) {
     const abs = path.join(current, child.name);
     const rel = path.relative(root, abs).split(path.sep).join("/");
     if (child.isSymbolicLink()) {
+      // See standaloneManifest.mjs: absolute npm .bin links are tied to the
+      // build runner and cannot be restored faithfully on Windows.
+      if (rel.split("/").includes(".bin")) continue;
       yield { rel, symlink: fs.readlinkSync(abs) };
     } else if (child.isDirectory()) {
       yield* walkFiles(root, abs);

@@ -80,6 +80,12 @@ function buildWebTree(root: string): void {
   fs.writeFileSync(path.join(root, "static", "app.css"), "body{margin:0}\n");
   if (!IS_WINDOWS) {
     fs.symlinkSync("../standalone/server.js", path.join(root, "static", "server-link.js"));
+    const nestedBin = path.join(standalone, "node_modules", "left-pad", "node_modules", ".bin");
+    fs.mkdirSync(nestedBin, { recursive: true });
+    fs.symlinkSync(
+      path.join(root, "outside-build-runner", "semver.js"),
+      path.join(nestedBin, "semver")
+    );
   }
 }
 
@@ -108,6 +114,10 @@ test("pack → restore roundtrip restores the tree byte-for-byte", async () => {
     );
     // The restored tree satisfies the manifest (sizes + hashes + symlink targets).
     const manifest = JSON.parse(fs.readFileSync(`${out}.manifest.json`, "utf8"));
+    assert.ok(
+      !manifest.entries.some((entry: { path: string }) => entry.path.includes("/.bin/")),
+      "runner-specific npm .bin symlinks must not enter the shared artifact"
+    );
     const verdict = await verifyStandaloneManifest(dst, manifest);
     assert.equal(
       verdict.ok,
@@ -223,6 +233,11 @@ test("hydratePlatformNatives swaps install-machine-forked packages for this leg"
     );
     writeNative(standalone, "node_modules/@img/sharp-linux-x64/lib/index.js", "linux fork");
     writeNative(standalone, "node_modules/fsevents/fsevents.js", "mac only");
+    writeNative(
+      standalone,
+      "node_modules/@wreq-js/binding-linux-x64-gnu/wreq-js.linux-x64-gnu.node",
+      "linux binding"
+    );
     // This leg (darwin-arm64) resolved its own forks: different sharp, no fsevents.
     writeNative(
       source,
@@ -230,6 +245,11 @@ test("hydratePlatformNatives swaps install-machine-forked packages for this leg"
       '{"name":"@img/sharp-darwin-arm64"}'
     );
     writeNative(source, "node_modules/@img/sharp-darwin-arm64/lib/index.js", "darwin fork");
+    writeNative(
+      source,
+      "node_modules/@wreq-js/binding-darwin-arm64/wreq-js.darwin-arm64.node",
+      "darwin binding"
+    );
 
     const result = hydratePlatformNatives({
       standaloneNodeModules: path.join(standalone, "node_modules"),
@@ -239,9 +259,16 @@ test("hydratePlatformNatives swaps install-machine-forked packages for this leg"
     // Platform forks ship under different package names, so hydration is
     // remove(standalone fork) + copy(this leg's fork); `replaced` stays empty
     // unless the exact same name exists on both sides.
-    assert.deepEqual(result.copied.sort(), ["@img/sharp-darwin-arm64"]);
+    assert.deepEqual(result.copied.sort(), [
+      "@img/sharp-darwin-arm64",
+      "@wreq-js/binding-darwin-arm64",
+    ]);
     assert.deepEqual(result.replaced, []);
-    assert.deepEqual(result.removed.sort(), ["@img/sharp-linux-x64", "fsevents"]);
+    assert.deepEqual(result.removed.sort(), [
+      "@img/sharp-linux-x64",
+      "@wreq-js/binding-linux-x64-gnu",
+      "fsevents",
+    ]);
     assert.ok(
       fs.existsSync(
         path.join(standalone, "node_modules", "@img", "sharp-darwin-arm64", "lib", "index.js")
@@ -268,7 +295,7 @@ test("verifyBundledNatives asserts serviceability and honors the onnx darwin-x64
     const nm = path.join(root, "node_modules");
     writeNative(nm, "koffi/build/koffi/linux_x64/koffi.node", "elf");
     writeNative(nm, "better-sqlite3/prebuilds/linux-x64.node", "napi");
-    writeNative(nm, "wreq-js/rust/wreq-js.linux-x64-gnu.node", "rust");
+    writeNative(nm, "@wreq-js/binding-linux-x64-gnu/wreq-js.linux-x64-gnu.node", "rust");
     writeNative(nm, "onnxruntime-node/bin/napi-v6/linux/x64/libonnxruntime.so", "ort");
 
     const good = verifyBundledNatives({ nodeModulesDir: nm, platform: "linux", arch: "x64" });
@@ -291,7 +318,7 @@ test("verifyBundledNatives asserts serviceability and honors the onnx darwin-x64
     const nm2 = path.join(root, "node_modules2");
     writeNative(nm2, "koffi/build/koffi/darwin_x64/koffi.node", "macho");
     writeNative(nm2, "better-sqlite3/prebuilds/darwin-x64.node", "napi");
-    writeNative(nm2, "wreq-js/rust/wreq-js.darwin-x64.node", "rust");
+    writeNative(nm2, "@wreq-js/binding-darwin-x64/wreq-js.darwin-x64.node", "rust");
     const exempted = verifyBundledNatives({ nodeModulesDir: nm2, platform: "darwin", arch: "x64" });
     assert.equal(
       exempted.ok,

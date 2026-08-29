@@ -57,6 +57,10 @@ env:
 
 jobs:
   publish:
+    # The fork does not own the upstream npm package by default. GitHub Release
+    # and GHCR remain automatic; npm publishing is enabled only after this repo
+    # has its own token or Trusted Publisher configuration.
+    if: vars.ENABLE_NPM_PUBLISH == 'true'
     # Same dynamic-runner rule as ci.yml's `build`/`test-unit`: `build:cli` falls back to a
     # full `next build`, whose working set outgrew the 16 GB hosted runner during the
     # v3.8.49 cycle — the publish died with "The runner has received a shutdown signal"
@@ -378,7 +382,7 @@ jobs:
   # this job, which needs no memory at all, performs the upload.
   stage-npm:
     needs: publish
-    if: needs.publish.outputs.skip != 'true'
+    if: vars.ENABLE_NPM_PUBLISH == 'true' && needs.publish.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -477,6 +481,7 @@ jobs:
           echo "✅ Published omniroute@$VERSION (dist-tag=$TAG) [DIRECT mode]"
 
   publish-opencode-plugin:
+    if: vars.ENABLE_NPM_PUBLISH == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read

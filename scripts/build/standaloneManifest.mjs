@@ -31,7 +31,7 @@ async function sha256File(filePath) {
   });
 }
 
-function walkDir(root, current, entries) {
+function walkDir(root, current, entries, { omitNpmBinSymlinks = false } = {}) {
   const children = fs.readdirSync(current, { withFileTypes: true });
   // Sort for determinism: manifest of the same tree is byte-identical.
   children.sort((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0));
@@ -39,9 +39,15 @@ function walkDir(root, current, entries) {
     const abs = path.join(current, child.name);
     const rel = path.relative(root, abs).split(path.sep).join("/");
     if (child.isSymbolicLink()) {
+      // npm may create absolute node_modules/.bin links. They point back to the
+      // build runner's checkout, are unusable after extraction, and Windows
+      // rewrites their target to a drive-qualified path so byte verification
+      // can never pass. The standalone runtime does not invoke npm bin shims;
+      // omit only those links while preserving every application symlink.
+      if (omitNpmBinSymlinks && rel.split("/").includes(".bin")) continue;
       entries.push({ path: rel, symlink: fs.readlinkSync(abs) });
     } else if (child.isDirectory()) {
-      walkDir(root, abs, entries);
+      walkDir(root, abs, entries, { omitNpmBinSymlinks });
     } else if (child.isFile()) {
       entries.push({ path: rel, file: abs });
     }
@@ -57,7 +63,7 @@ function walkDir(root, current, entries) {
  */
 export async function buildStandaloneManifest(rootDir) {
   const entries = [];
-  walkDir(rootDir, rootDir, entries);
+  walkDir(rootDir, rootDir, entries, { omitNpmBinSymlinks: true });
   const manifestEntries = [];
   for (const entry of entries) {
     if (entry.symlink !== undefined) {

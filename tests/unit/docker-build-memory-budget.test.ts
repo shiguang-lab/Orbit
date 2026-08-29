@@ -40,6 +40,10 @@ const dockerfile = readFileSync(
   fileURLToPath(new URL("../../Dockerfile", import.meta.url)),
   "utf8"
 );
+const publishWorkflow = readFileSync(
+  fileURLToPath(new URL("../../.github/workflows/docker-publish.yml", import.meta.url)),
+  "utf8"
+);
 
 function readArgDefault(name: string): number {
   const match = dockerfile.match(new RegExp(`^ARG ${name}=(\\d+)$`, "m"));
@@ -87,4 +91,26 @@ test("worker count × measured per-process RSS fits a 16 GB GitHub runner", () =
 test("the worker pool does not oversubscribe the runner's 4 vCPU", () => {
   const workers = readArgDefault("OMNIROUTE_BUILD_WORKERS") - 1;
   assert.ok(workers <= 4, `${workers} workers oversubscribe a 4 vCPU runner`);
+});
+
+test("GitHub-hosted Docker builds use webpack and a bounded V8 heap", () => {
+  const supportedBuilds = publishWorkflow.match(
+    /- name: Build and push platform image by digest[\s\S]*?- name: Build and push BUN base platform image by digest/
+  );
+  assert.ok(supportedBuilds, "Docker publish workflow must define the supported image builds");
+  assert.equal(
+    (supportedBuilds[0].match(/OMNIROUTE_USE_TURBOPACK=0/g) ?? []).length,
+    2,
+    "both supported image targets must use webpack on 16 GB GitHub runners"
+  );
+  assert.equal(
+    (supportedBuilds[0].match(/OMNIROUTE_BUILD_MEMORY_MB=6144/g) ?? []).length,
+    2,
+    "both supported image targets must leave host memory outside V8 for BuildKit"
+  );
+  assert.doesNotMatch(
+    supportedBuilds[0],
+    /OMNIROUTE_BUILD_MEMORY_MB=12288/,
+    "a 12 GB V8 heap plus native compiler memory exhausts the 16 GB runner"
+  );
 });

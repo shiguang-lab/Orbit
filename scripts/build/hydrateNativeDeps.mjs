@@ -9,19 +9,24 @@
  *
  *  - Bundled-for-all (verify only): koffi ships every triplet under
  *    `build/koffi/<os>_<arch>`, better-sqlite3 v13 ships Node-API prebuilds for
- *    8 platforms, wreq-js ships `rust/wreq-js.<plat>-<arch>[-libc].node`, and
- *    onnxruntime-node ships `bin/napi-v6/<os>/<arch>`.
+ *    8 platforms and onnxruntime-node ships `bin/napi-v6/<os>/<arch>`.
  *  - Install-machine-forked (hydrate): `@img/sharp-*`, `@img/sharp-libvips-*`,
- *    `@ngrok/ngrok-*` and macOS-only `fsevents` resolve to whichever platform
- *    ran `npm ci`. The ubuntu-built tree carries the linux forks; each leg
- *    replaces them with the forks from its OWN `npm ci`d node_modules.
+ *    `@ngrok/ngrok-*`, `@wreq-js/binding-*` and macOS-only `fsevents` resolve
+ *    to whichever platform ran `npm ci`. The ubuntu-built tree carries the
+ *    linux forks; each leg replaces them with the forks from its OWN `npm ci`d
+ *    node_modules.
  */
 
 import fs from "node:fs";
 import path from "node:path";
 
 /** Scope prefixes whose members are install-machine-forked. */
-export const HYDRATED_SCOPES = ["@img/sharp-", "@img/sharp-libvips-", "@ngrok/ngrok-"];
+export const HYDRATED_SCOPES = [
+  "@img/sharp-",
+  "@img/sharp-libvips-",
+  "@ngrok/ngrok-",
+  "@wreq-js/binding-",
+];
 
 /** Standalone packages that are not forked but must never be platform-forked. */
 export const HYDRATED_ROOT_PACKAGES = ["fsevents"];
@@ -118,13 +123,21 @@ export function verifyBundledNatives({ nodeModulesDir, platform, arch }) {
   if (!fs.existsSync(sqlitePrebuild))
     errors.push(`better-sqlite3: missing prebuild ${triple.dash}.node`);
 
-  const wreqDir = path.join(nodeModulesDir, "wreq-js", "rust");
-  const wreqNames = fs.existsSync(wreqDir)
-    ? fs
-        .readdirSync(wreqDir)
-        .filter((n) => n.startsWith(`wreq-js.${triple.dash}`) && n.endsWith(".node"))
-    : [];
-  if (wreqNames.length === 0) errors.push(`wreq-js: missing rust binary for ${triple.dash}`);
+  // wreq-js 3.x moved native binaries out of wreq-js/rust into optional
+  // @wreq-js/binding-* packages. npm installs only the current machine's fork,
+  // so hydration must copy those packages just like sharp/ngrok above.
+  const wreqSuffixes =
+    platform === "linux"
+      ? [`${triple.dash}-gnu`, `${triple.dash}-musl`]
+      : platform === "win32"
+        ? [`${triple.dash}-msvc`]
+        : [triple.dash];
+  const hasWreqBinding = wreqSuffixes.some((suffix) => {
+    const bindingDir = path.join(nodeModulesDir, "@wreq-js", `binding-${suffix}`);
+    if (!fs.existsSync(bindingDir)) return false;
+    return fs.readdirSync(bindingDir).some((name) => name.endsWith(".node"));
+  });
+  if (!hasWreqBinding) errors.push(`wreq-js: missing native binding for ${triple.dash}`);
 
   const exempt = BUNDLED_EXEMPTIONS.has(`onnxruntime-node:${triple.dash}`);
   if (!exempt) {

@@ -1,4 +1,4 @@
-name: Publish to Docker Hub
+name: Publish Docker images to GHCR
 
 on:
   push:
@@ -134,7 +134,6 @@ jobs:
             arch: arm64
     env:
       IMAGE_NAME: ghcr.io/shiguang-lab/orbit
-      GHCR_IMAGE_NAME: ghcr.io/shiguang-lab/orbit
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -145,10 +144,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-
-      - name: Login to Docker Hub (skipped — GHCR-only fork)
-        if: false
-        uses: docker/login-action@v4.6.0
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4.6.0
@@ -164,12 +159,11 @@ jobs:
           context: .
           target: runner-base
           build-args: |
-            OMNIROUTE_BUILD_MEMORY_MB=12288
+            OMNIROUTE_BUILD_MEMORY_MB=6144
+            OMNIROUTE_USE_TURBOPACK=0
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          tags: |
-            ${{ env.IMAGE_NAME }}
-            ${{ env.GHCR_IMAGE_NAME }}
+          tags: ${{ env.IMAGE_NAME }}
           cache-from: type=gha,scope=docker-${{ matrix.arch }}
           cache-to: type=gha,scope=docker-${{ matrix.arch }},mode=max,ignore-error=true
           no-cache: false
@@ -183,12 +177,11 @@ jobs:
           context: .
           target: runner-web
           build-args: |
-            OMNIROUTE_BUILD_MEMORY_MB=12288
+            OMNIROUTE_BUILD_MEMORY_MB=6144
+            OMNIROUTE_USE_TURBOPACK=0
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          tags: |
-            ${{ env.IMAGE_NAME }}
-            ${{ env.GHCR_IMAGE_NAME }}
+          tags: ${{ env.IMAGE_NAME }}
           cache-from: type=gha,scope=docker-web-${{ matrix.arch }}
           cache-to: type=gha,scope=docker-web-${{ matrix.arch }},mode=max,ignore-error=true
           no-cache: false
@@ -210,12 +203,11 @@ jobs:
           file: Dockerfile.bun
           target: runner-base
           build-args: |
-            OMNIROUTE_BUILD_MEMORY_MB=12288
+            OMNIROUTE_BUILD_MEMORY_MB=6144
+            OMNIROUTE_USE_TURBOPACK=0
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          tags: |
-            ${{ env.IMAGE_NAME }}
-            ${{ env.GHCR_IMAGE_NAME }}
+          tags: ${{ env.IMAGE_NAME }}
           cache-from: type=gha,scope=docker-bun-base-${{ matrix.arch }}
           cache-to: type=gha,scope=docker-bun-base-${{ matrix.arch }},mode=max,ignore-error=true
           no-cache: false
@@ -237,12 +229,11 @@ jobs:
           file: Dockerfile.bun
           target: runner-web
           build-args: |
-            OMNIROUTE_BUILD_MEMORY_MB=12288
+            OMNIROUTE_BUILD_MEMORY_MB=6144
+            OMNIROUTE_USE_TURBOPACK=0
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
-          tags: |
-            ${{ env.IMAGE_NAME }}
-            ${{ env.GHCR_IMAGE_NAME }}
+          tags: ${{ env.IMAGE_NAME }}
           cache-from: type=gha,scope=docker-bun-web-${{ matrix.arch }}
           cache-to: type=gha,scope=docker-bun-web-${{ matrix.arch }},mode=max,ignore-error=true
           no-cache: false
@@ -323,7 +314,6 @@ jobs:
       security-events: write
     env:
       IMAGE_NAME: ghcr.io/shiguang-lab/orbit
-      GHCR_IMAGE_NAME: ghcr.io/shiguang-lab/orbit
       VERSION: ${{ needs.prepare.outputs.version }}
       PROMOTE_LATEST: ${{ needs.prepare.outputs.promote_latest }}
     steps:
@@ -336,10 +326,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
-
-      - name: Login to Docker Hub (skipped — GHCR-only fork)
-        if: false
-        uses: docker/login-action@v4.6.0
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v4.6.0
@@ -382,7 +368,7 @@ jobs:
           path: /tmp/digests/bun-web
           merge-multiple: true
 
-      - name: Create Docker Hub manifest
+      - name: Create GHCR manifests
         run: |
           set -euo pipefail
 
@@ -412,36 +398,6 @@ jobs:
           create_manifest "${IMAGE_NAME}" "-bun" /tmp/digests/bun-base optional
           create_manifest "${IMAGE_NAME}" "-web-bun" /tmp/digests/bun-web optional
 
-      - name: Create GHCR manifest
-        run: |
-          set -euo pipefail
-
-          create_manifest() {
-            local image="$1" suffix="$2" dir="$3" optional="${4:-}"
-            local tags=(-t "${image}:${VERSION}${suffix}")
-            if [ "$PROMOTE_LATEST" = "true" ]; then
-              tags+=(-t "${image}:latest${suffix}")
-            fi
-            local refs=()
-            while IFS= read -r digest_file; do
-              refs+=("${image}@sha256:$(basename "$digest_file")")
-            done < <(find "$dir" -type f | sort)
-            if [ "${#refs[@]}" -eq 0 ]; then
-              if [ -n "$optional" ]; then
-                echo "::warning::No image digests in $dir — skipping optional tag ${image}:${VERSION}${suffix}" >&2
-                return 0
-              fi
-              echo "No image digests in $dir" >&2
-              exit 1
-            fi
-            docker buildx imagetools create "${tags[@]}" "${refs[@]}"
-          }
-
-          create_manifest "${GHCR_IMAGE_NAME}" "" /tmp/digests/base
-          create_manifest "${GHCR_IMAGE_NAME}" "-web" /tmp/digests/web
-          create_manifest "${GHCR_IMAGE_NAME}" "-bun" /tmp/digests/bun-base optional
-          create_manifest "${GHCR_IMAGE_NAME}" "-web-bun" /tmp/digests/bun-web optional
-
       - name: Inspect image
         if: needs.prepare.outputs.version != 'main'
         run: |
@@ -452,7 +408,7 @@ jobs:
         continue-on-error: true
         uses: anchore/sbom-action@v0
         with:
-          image: ${{ env.GHCR_IMAGE_NAME }}:${{ env.VERSION }}
+          image: ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           format: cyclonedx-json
           output-file: sbom-image.cdx.json
           artifact-name: sbom-image.cdx.json
@@ -473,7 +429,7 @@ jobs:
         continue-on-error: true
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ env.GHCR_IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           format: sarif
           output: trivy-results.sarif
           severity: HIGH,CRITICAL
@@ -494,7 +450,7 @@ jobs:
         if: needs.prepare.outputs.version != 'main'
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
-          image-ref: ${{ env.GHCR_IMAGE_NAME }}:${{ env.VERSION }}
+          image-ref: ${{ env.IMAGE_NAME }}:${{ env.VERSION }}
           format: table
           severity: CRITICAL
           ignore-unfixed: true
@@ -507,15 +463,3 @@ jobs:
         with:
           sarif_file: trivy-results.sarif
           category: trivy-image
-
-      - name: Update Docker Hub description
-        # Only refresh README/description when we actually promote :latest
-        # (avoids overwriting from main, next, or back-fill builds).
-        if: needs.prepare.outputs.promote_latest == 'true'
-        uses: peter-evans/dockerhub-description@v5
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-          repository: diegosouzapw/omniroute
-          short-description: "OmniRoute — Unified AI proxy. Route any LLM through one endpoint."
-          readme-filepath: ./README.md

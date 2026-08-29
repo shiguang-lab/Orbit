@@ -236,6 +236,15 @@ jobs:
         #          (koffi triplets, better-sqlite3 prebuilds, wreq-js, onnxruntime)
         #          can service this leg's platform/arch before packaging starts.
         run: |
+          # The Linux installer contains x64 and arm64 in one job, while npm ci
+          # installs optional native packages only for the runner's x64 arch.
+          # Pull the lockfile-pinned arm64 wreq binding explicitly so hydration
+          # can place both architectures into the packaged standalone tree.
+          if [ "${{ matrix.platform }}" = "linux" ]; then
+            WREQ_ARM64_VERSION=$(node -p "require('./node_modules/wreq-js/package.json').optionalDependencies['@wreq-js/binding-linux-arm64-gnu']")
+            npm install --no-save --package-lock=false --ignore-scripts --force \
+              "@wreq-js/binding-linux-arm64-gnu@${WREQ_ARM64_VERSION}"
+          fi
           node scripts/build/standaloneBundle.mjs restore --archive web-bundle.tar.gz
           node scripts/build/standaloneBundle.mjs hydrate --platform ${{ matrix.os }} --arch ${{ matrix.arch }}
 
@@ -476,7 +485,13 @@ jobs:
     name: Publish to npm
     needs: [validate, release]
     # A re-dispatch that only re-attaches desktop assets must not publish the npm package again.
-    if: ${{ github.event_name != 'workflow_dispatch' || inputs.publish_npm }}
+    # This fork does not own the upstream `omniroute` npm package and has no npm
+    # Trusted Publisher or NPM_TOKEN. Keep GitHub Release/GHCR publishing fully
+    # automatic, while npm remains an explicit opt-in for a future configured
+    # registry owner. The status function + explicit results also prevent a
+    # failed desktop matrix ancestor from silently skipping npm after `release`
+    # successfully attached partial assets.
+    if: ${{ !cancelled() && needs.validate.result == 'success' && needs.release.result == 'success' && vars.ENABLE_NPM_PUBLISH == 'true' && (github.event_name == 'push' || inputs.publish_npm) }}
     permissions:
       # Must be `write`, not `read`: this job calls the reusable npm-publish.yml whose
       # `publish` job needs `contents: write` (gh release upload — attach the SBOM, #3874).

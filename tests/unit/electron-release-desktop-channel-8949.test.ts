@@ -136,3 +136,18 @@ test("the asset check is a separate job, so it cannot block the npm channel", ()
       "the dedicated verify-desktop-assets job carries that failure instead"
   );
 });
+
+test("the fork publishes npm only after registry ownership is explicitly enabled", () => {
+  const publishBlock = extractJobBlock(readWorkflow(), "publish-npm");
+  assert.match(
+    publishBlock,
+    /vars\.ENABLE_NPM_PUBLISH == 'true'/,
+    "the fork has no upstream npm ownership or Trusted Publisher and must not attempt npm by default"
+  );
+  assert.match(
+    publishBlock,
+    /!cancelled\(\)/,
+    "an explicitly enabled npm publish must not be implicitly skipped by a failed desktop ancestor"
+  );
+  assert.match(publishBlock, /needs\.release\.result == 'success'/);
+});
