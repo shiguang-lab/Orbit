@@ -163,6 +163,8 @@ jobs:
         with:
           context: .
           target: runner-base
+          build-args: |
+            OMNIROUTE_BUILD_MEMORY_MB=12288
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           tags: |
@@ -180,6 +182,8 @@ jobs:
         with:
           context: .
           target: runner-web
+          build-args: |
+            OMNIROUTE_BUILD_MEMORY_MB=12288
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           tags: |
@@ -205,6 +209,8 @@ jobs:
           context: .
           file: Dockerfile.bun
           target: runner-base
+          build-args: |
+            OMNIROUTE_BUILD_MEMORY_MB=12288
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           tags: |
@@ -230,6 +236,8 @@ jobs:
           context: .
           file: Dockerfile.bun
           target: runner-web
+          build-args: |
+            OMNIROUTE_BUILD_MEMORY_MB=12288
           platforms: ${{ matrix.platform }}
           outputs: type=image,push-by-digest=true,name-canonical=true,push=true
           tags: |
