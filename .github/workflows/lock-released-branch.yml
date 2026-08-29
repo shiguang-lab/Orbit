@@ -107,6 +107,16 @@ jobs:
         run: |
           set -euo pipefail
 
+          # This guard protects the upstream release branches only. A fork keeps
+          # the upstream tags for reference but publishes its own images from the
+          # same release branch; treating those inherited tags as a local lock makes
+          # every legitimate fork publish red before its actual release workflow can
+          # report a result.
+          if [ "${REPO}" != "diegosouzapw/OmniRoute" ]; then
+            echo "${REPO} is a fork; upstream release-tag guard is not applicable."
+            exit 0
+          fi
+
           # Extract version from ref: release/v3.8.3 -> v3.8.3
           if [[ ! "${REF}" =~ ^release/(v[0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             echo "Ref ${REF} does not match release/vX.Y.Z — nothing to guard."

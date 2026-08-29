@@ -91,3 +91,12 @@ test("no workflow job is gated on a different repository", () => {
       `matching trigger, so the workflow shows up as a skipped check forever.`
   );
 });
+
+test("the released-branch guard is a no-op for this fork", () => {
+  const lockWorkflow = fs.readFileSync(path.join(workflowDir, "lock-released-branch.yml"), "utf-8");
+  assert.match(
+    lockWorkflow,
+    /REPO.*github\.repository[\s\S]*?REPO.*diegosouzapw\/OmniRoute[\s\S]*?fork[\s\S]*?exit 0/i,
+    "the fork must not reject pushes because it inherits the upstream release tag"
+  );
+});
