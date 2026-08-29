@@ -1,3 +1,5 @@
 .fork-sync/
 fork-sync-kit/sync.conf
 node_modules/
+.env
+Dockerfile.nocache
