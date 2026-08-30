@@ -640,7 +640,22 @@ const nextConfig = {
   },
 
   async rewrites() {
+    const devApiProxy = process.env.OMNIROUTE_DEV_API_PROXY?.trim().replace(/\/$/, "");
+    const localApiProxyRules = devApiProxy
+      ? [
+          {
+            source: "/api",
+            destination: `${devApiProxy}/api`,
+          },
+          {
+            source: "/api/:path*",
+            destination: `${devApiProxy}/api/:path*`,
+          },
+        ]
+      : [];
+
     return [
+      ...localApiProxyRules,
       {
         source: "/chat/completions",
         destination: "/api/v1/chat/completions",
