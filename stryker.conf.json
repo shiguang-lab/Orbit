@@ -278,6 +278,7 @@
       "tests/unit/model-catalog-runtime-invalidation.test.ts",
       "tests/unit/model-cooldowns-route-auth.test.ts",
       "tests/unit/model-cooldowns-route.test.ts",
+      "tests/unit/lkgp-stale-pin-exhaustion-11911.test.ts",
       "tests/unit/model-lockout-decay.test.ts",
       "tests/unit/model-lockout-exact-cooldown-cap.test.ts",
       "tests/unit/model-lockout-max-cooldown.test.ts",
