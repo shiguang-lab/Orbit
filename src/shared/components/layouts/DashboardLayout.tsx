@@ -9,6 +9,7 @@ import MaintenanceBanner from "../MaintenanceBanner";
 import CommandPalette from "../CommandPalette";
 import NavigationProgress from "../NavigationProgress";
 import { useIsElectron } from "@/shared/hooks/useElectron";
+import { Layout } from "antd";
 import {
   installDashboardCsrfFetch,
   prefetchDashboardCsrfToken,
@@ -79,7 +80,11 @@ export default function DashboardLayout({ children }) {
   return (
     // No bg-bg here: the body grid wallpaper (globals.css body::before) shows through
     // this transparent wrapper into the content area. body's --color-bg is the base fill.
-    <div className="flex h-dvh min-h-0 w-full overflow-hidden">
+    <Layout
+      hasSider
+      className="h-dvh min-h-0 w-full overflow-hidden bg-transparent"
+      style={{ background: "transparent" }}
+    >
       <Suspense fallback={null}>
         <NavigationProgress />
       </Suspense>
@@ -110,16 +115,17 @@ export default function DashboardLayout({ children }) {
       </div>
 
       {/* Main content */}
-      <main
+      <Layout
         id="main-content"
         className="relative flex min-h-0 flex-1 min-w-0 flex-col transition-colors duration-300"
+        style={{ background: "transparent" }}
       >
         <Header
           onMenuClick={() => setSidebarOpen(true)}
           onOpenCommandPalette={() => setCommandPaletteOpen(true)}
         />
         {!isE2EMode && <MaintenanceBanner />}
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 sm:p-6 lg:p-10">
+        <Layout.Content className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 sm:p-6 lg:p-10">
           {/* Fluid up to a 4K cap (3840px): content follows the viewport on large
               monitors and only centers (side gutters) beyond ~4K, instead of the prior
               1280px cap that left big empty margins on wide screens. */}
@@ -127,13 +133,13 @@ export default function DashboardLayout({ children }) {
             <Breadcrumbs />
             <div className="flex-1 min-h-0">{children}</div>
           </div>
-        </div>
-      </main>
+        </Layout.Content>
+      </Layout>
 
       {/* Global notification toast system */}
       <NotificationToast />
 
       <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
-    </div>
+    </Layout>
   );
 }

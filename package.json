@@ -278,6 +278,7 @@
     "@toon-format/toon": "^4.1.1",
     "@types/mdx": "^2.0.13",
     "@xyflow/react": "^12.11.3",
+    "antd": "^6.6.2",
     "axios": "^1.19.0",
     "bcryptjs": "^3.0.3",
     "bottleneck": "^2.19.5",

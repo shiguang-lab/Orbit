@@ -17,6 +17,7 @@ import Input from "./Input";
 import { ConfirmModal } from "./Modal";
 import CloudSyncStatus from "./CloudSyncStatus";
 import { useTranslations } from "next-intl";
+import { ConfigProvider, Layout, Menu, theme as antdTheme, type MenuProps } from "antd";
 import {
   HIDDEN_SIDEBAR_GROUP_LABELS_SETTING_KEY,
   normalizeHiddenSidebarGroupLabels,
@@ -91,7 +92,7 @@ export default function Sidebar({
   const pathname = usePathname();
   const t = useTranslations("sidebar");
   const tc = useTranslations("common");
-  const sidebarRef = useRef<HTMLElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const [showShutdownModal, setShowShutdownModal] = useState(false);
   const [showRestartModal, setShowRestartModal] = useState(false);
   const [isShuttingDown, setIsShuttingDown] = useState(false);
@@ -352,7 +353,7 @@ export default function Sidebar({
     setIsShuttingDown(true);
     try {
       await fetch("/api/shutdown", { method: "POST" });
-    } catch (e) {
+    } catch {
       // Expected to fail as server shuts down
     }
     setIsShuttingDown(false);
@@ -364,7 +365,7 @@ export default function Sidebar({
     setIsRestarting(true);
     try {
       await fetch("/api/restart", { method: "POST" });
-    } catch (e) {
+    } catch {
       // Expected to fail as server restarts
     }
     setIsRestarting(false);
@@ -390,304 +391,320 @@ export default function Sidebar({
 
   const handleMouseLeave = useCallback(() => setHoveredItem(null), []);
 
-  const renderNavLink = (item) => {
-    const active = !item.external && activeHref === item.href;
-    const className = cn(
-      "group flex items-center gap-3 rounded-lg transition-all",
-      collapsed ? "min-h-10 justify-center px-2 py-2.5" : "min-h-11 px-3 py-2.5",
-      active
-        ? "bg-primary/10 text-primary"
-        : "text-text-muted hover:bg-surface/50 hover:text-text-main"
+  const renderMenuItem = (item: SidebarItemDefinition & { label: string; subtitle?: string }) => {
+    const icon = (
+      <span className="material-symbols-outlined text-[19px]" style={getIconStyle(item.id)}>
+        {item.icon}
+      </span>
     );
-    const iconClassName = cn(
-      "material-symbols-outlined shrink-0 text-[20px]",
-      active ? "fill-1" : "group-hover:text-primary transition-colors"
-    );
-    const content = (
-      <>
-        <span className={iconClassName} style={getIconStyle(item.id)}>
-          {item.icon}
-        </span>
-        {!collapsed && (
-          <div className="flex min-w-0 flex-col">
-            <span className="truncate text-sm font-medium">{item.label}</span>
-            {item.subtitle && (
-              <span className="truncate text-[11px] leading-4 text-text-muted/65">
+    const label = (
+      <span
+        className="flex min-w-0 items-center"
+        onMouseEnter={(event) => handleMouseEnter(event, item.id, item.label)}
+        onMouseLeave={handleMouseLeave}
+      >
+        {item.external ? (
+          <a
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={onClose}
+            className="min-w-0 flex-1"
+          >
+            <span className="block truncate text-sm font-medium">{item.label}</span>
+            {!collapsed && item.subtitle && (
+              <span className="block truncate text-[11px] leading-4 text-text-muted/65">
                 {item.subtitle}
               </span>
             )}
-          </div>
+          </a>
+        ) : (
+          <Link href={item.href} prefetch={false} onClick={onClose} className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-medium">{item.label}</span>
+            {!collapsed && item.subtitle && (
+              <span className="block truncate text-[11px] leading-4 text-text-muted/65">
+                {item.subtitle}
+              </span>
+            )}
+          </Link>
         )}
-      </>
+      </span>
     );
-    const sharedProps = {
-      onMouseEnter: (e: React.MouseEvent<HTMLElement>) => handleMouseEnter(e, item.id, item.label),
-      onMouseLeave: handleMouseLeave,
-    };
+    return {
+      key: item.href,
+      icon,
+      label,
+      title: item.label,
+    } satisfies NonNullable<MenuProps["items"]>[number];
+  };
 
-    if (item.external) {
-      return (
-        <a
-          key={item.href}
-          href={item.href}
-          target="_blank"
-          rel="noopener noreferrer"
-          onClick={onClose}
-          className={className}
-          {...sharedProps}
-        >
-          {content}
-        </a>
-      );
-    }
-
+  const renderSectionMenu = (section: (typeof displaySections)[number]) => {
+    const items = section.children.map((child: any) => {
+      if (child.type !== "group") return renderMenuItem(child);
+      return {
+        key: child.id,
+        type: "group" as const,
+        label: child.separatorHidden ? null : child.title,
+        children: child.items.map(renderMenuItem),
+      };
+    });
     return (
-      <Link
-        key={item.href}
-        href={item.href}
-        prefetch={false}
-        onClick={onClose}
-        className={className}
-        {...sharedProps}
-      >
-        {content}
-      </Link>
+      <Menu
+        mode="inline"
+        selectable
+        selectedKeys={activeHref ? [activeHref] : []}
+        items={items}
+        className="sidebar-menu"
+        inlineCollapsed={collapsed}
+      />
     );
   };
 
   return (
     <>
-      <aside
-        ref={sidebarRef}
-        className={cn(
-          "relative flex h-full min-h-0 flex-col border-r border-black/5 bg-sidebar transition-all duration-300 ease-in-out dark:border-white/5",
-          collapsed ? "w-16" : "w-[min(88vw,260px)]"
-        )}
-        style={{ paddingTop: isMacElectron ? "var(--desktop-safe-top)" : undefined }}
+      <ConfigProvider
+        theme={{
+          algorithm: antdTheme.defaultAlgorithm,
+          token: {
+            colorPrimary: "var(--color-primary)",
+            colorBgContainer: "var(--color-sidebar)",
+            colorText: "var(--color-text-main)",
+            colorTextDescription: "var(--color-text-muted)",
+            borderRadius: 8,
+          },
+          components: {
+            Menu: {
+              itemBg: "transparent",
+              itemColor: "var(--color-text-muted)",
+              itemHoverBg: "var(--color-surface)",
+              itemSelectedBg: "transparent",
+              itemSelectedColor: "var(--color-primary)",
+              groupTitleColor: "var(--color-text-muted)",
+              itemHeight: 42,
+              itemMarginBlock: 2,
+            },
+          },
+        }}
       >
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-3 focus:bg-primary focus:text-white focus:rounded-md focus:m-2"
-        >
-          {t("skipToContent")}
-        </a>
-
-        <div className={cn("relative", collapsed ? "px-2 pb-3 pt-4" : "px-4 pb-3 pt-4")}>
-          <Link
-            href="/home"
-            prefetch={false}
-            className={cn("flex min-w-0 items-center", collapsed ? "justify-center" : "gap-2.5")}
-          >
-            <div className="flex items-center justify-center size-8 rounded-lg overflow-hidden bg-[#05081a] shrink-0">
-              <img
-                src={customLogo || APP_CONFIG.logoPath}
-                alt={customAppName || APP_CONFIG.name}
-                className="size-full object-cover"
-                onError={(event) => {
-                  if (event.currentTarget.src.endsWith(APP_CONFIG.logoPath)) return;
-                  event.currentTarget.src = APP_CONFIG.logoPath;
-                }}
-              />
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col min-w-0">
-                <h1 className="truncate text-base font-semibold tracking-tight text-text-main">
-                  {customAppName || APP_CONFIG.name}
-                </h1>
-                <span className="text-xs text-text-muted">v{APP_CONFIG.version}</span>
-              </div>
-            )}
-          </Link>
-        </div>
-
-        {onToggleCollapse && (
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-            className="absolute end-[-16px] top-1/2 z-40 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-surface text-text-muted shadow-lg shadow-black/10 transition-colors hover:bg-surface-2 hover:text-text-main focus:outline-none focus:ring-2 focus:ring-primary/40 dark:shadow-black/30"
-          >
-            <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
-              {collapsed ? "chevron_right" : "chevron_left"}
-            </span>
-          </button>
-        )}
-
-        {!collapsed && (
-          <div className="px-4 pb-2">
-            <Input
-              type="search"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={tc("search")}
-              aria-label={tc("search")}
-              icon="search"
-              className="gap-0"
-              inputClassName="py-2 text-sm"
-            />
-          </div>
-        )}
-
-        <nav
-          aria-label={t("mainNavigation")}
-          className={cn(
-            "min-h-0 flex-1 overflow-y-auto py-1 custom-scrollbar",
-            collapsed ? "px-2 space-y-0.5" : "px-3"
-          )}
-        >
-          {isSearching && displaySections.length === 0 && (
-            <p className="px-2 py-3 text-xs text-text-muted/60">{tc("noResults")}</p>
-          )}
-          {displaySections.map((section, idx) => {
-            const sectionId = section.id as SidebarSectionId;
-            const isExpanded = isSearching || expandedSections.has(sectionId);
-            const isPinned = pinnedSections.has(sectionId);
-            const isFirst = idx === 0;
-            const sectionItems = section.children.flatMap((child: any) =>
-              child.type === "group" ? child.items : [child]
-            );
-
-            // Collapsed (mini) mode: flat items with dividers between sections
-            if (collapsed) {
-              return (
-                <div key={section.id}>
-                  {!isFirst && (
-                    <div className="border-t border-black/5 dark:border-white/5 my-1.5" />
-                  )}
-                  {sectionItems.map(renderNavLink)}
-                </div>
-              );
-            }
-
-            // Sections without a visible title (e.g. Home) render items directly
-            if (section.showTitle === false) {
-              return (
-                <div key={section.id} className={cn("space-y-0.5", !isFirst && "mt-1")}>
-                  {sectionItems.map(renderNavLink)}
-                </div>
-              );
-            }
-
-            // Expanded mode: collapsible section with pin
-            return (
-              <div key={section.id} className={isFirst ? "space-y-0.5" : "mt-2"}>
-                <div className="group/header flex min-h-9 items-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-surface/30">
-                  <button
-                    type="button"
-                    onClick={() => toggleSection(sectionId)}
-                    aria-expanded={isExpanded}
-                    aria-controls={`sidebar-section-${sectionId}`}
-                    className="flex min-w-0 flex-1 items-center gap-2 text-start"
-                  >
-                    <span className="truncate text-sm font-semibold tracking-wide text-text-muted/90 transition-colors group-hover/header:text-text-main">
-                      {section.title}
-                    </span>
-                    <span
-                      className={cn(
-                        "material-symbols-outlined ms-auto shrink-0 text-[14px] text-text-muted/55 transition-all duration-200 group-hover/header:text-text-muted",
-                        isExpanded && "rotate-180"
-                      )}
-                      aria-hidden="true"
-                    >
-                      expand_more
-                    </span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      togglePin(sectionId);
-                    }}
-                    aria-label={isPinned ? t("unpinSection") : t("pinSectionOpen")}
-                    type="button"
-                    title={isPinned ? t("unpinSection") : t("pinSectionOpen")}
-                    className={cn(
-                      "shrink-0 rounded p-1 transition-all",
-                      isPinned
-                        ? "text-primary opacity-100"
-                        : "text-text-muted/45 opacity-100 hover:text-text-muted"
-                    )}
-                  >
-                    <span
-                      className="material-symbols-outlined text-[12px]"
-                      style={{
-                        ...(isPinned ? { fontVariationSettings: "'FILL' 1" } : {}),
-                      }}
-                    >
-                      push_pin
-                    </span>
-                  </button>
-                </div>
-
-                {isExpanded && (
-                  <div id={`sidebar-section-${sectionId}`} className="mt-0.5 space-y-0.5">
-                    {section.children.map((child: any) => {
-                      if (child.type === "group") {
-                        if (child.items.length === 0) return null;
-                        const separatorHidden = child.separatorHidden === true;
-                        return (
-                          <div key={child.id} className={separatorHidden ? "mt-0.5" : "mt-2"}>
-                            {!separatorHidden && (
-                              <div className="mb-1 flex items-center gap-2 px-2 py-1">
-                                <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
-                                <span className="text-[11px] font-medium tracking-wide text-text-muted/65">
-                                  {child.title}
-                                </span>
-                              </div>
-                            )}
-                            {child.items.map(renderNavLink)}
-                          </div>
-                        );
-                      }
-                      return renderNavLink(child);
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {!isE2EMode && <CloudSyncStatus collapsed={collapsed} />}
-
-        <div
-          className={cn(
-            "shrink-0 border-t border-black/5 dark:border-white/5",
-            collapsed ? "p-2 flex flex-col gap-1" : "p-2 flex gap-2"
-          )}
+        <Layout.Sider
+          ref={sidebarRef}
+          collapsed={collapsed}
+          collapsedWidth={64}
+          width={260}
+          trigger={null}
+          className="sidebar-sider relative h-full min-h-0 border-r border-black/5 bg-sidebar transition-all duration-300 ease-in-out dark:border-white/5"
           style={{
-            paddingBottom: isMacElectron ? "calc(0.5rem + var(--desktop-safe-bottom))" : undefined,
+            background: "var(--color-sidebar)",
+            paddingTop: isMacElectron ? "var(--desktop-safe-top)" : undefined,
           }}
         >
-          <button
-            onClick={() => setShowRestartModal(true)}
-            title={t("restart")}
-            aria-label={t("restart")}
+          <a
+            href="#main-content"
+            className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-3 focus:bg-primary focus:text-white focus:rounded-md focus:m-2"
+          >
+            {t("skipToContent")}
+          </a>
+
+          <div className={cn("relative", collapsed ? "px-2 pb-3 pt-4" : "px-4 pb-3 pt-4")}>
+            <Link
+              href="/home"
+              prefetch={false}
+              className={cn("flex min-w-0 items-center", collapsed ? "justify-center" : "gap-2.5")}
+            >
+              <div className="flex items-center justify-center size-8 rounded-lg overflow-hidden bg-[#05081a] shrink-0">
+                <img
+                  src={customLogo || APP_CONFIG.logoPath}
+                  alt={customAppName || APP_CONFIG.name}
+                  className="size-full object-cover"
+                  onError={(event) => {
+                    if (event.currentTarget.src.endsWith(APP_CONFIG.logoPath)) return;
+                    event.currentTarget.src = APP_CONFIG.logoPath;
+                  }}
+                />
+              </div>
+              {!collapsed && (
+                <div className="flex flex-col min-w-0">
+                  <h1 className="truncate text-base font-semibold tracking-tight text-text-main">
+                    {customAppName || APP_CONFIG.name}
+                  </h1>
+                  <span className="text-xs text-text-muted">v{APP_CONFIG.version}</span>
+                </div>
+              )}
+            </Link>
+          </div>
+
+          {onToggleCollapse && (
+            <button
+              type="button"
+              onClick={onToggleCollapse}
+              title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+              className="absolute end-[-16px] top-1/2 z-40 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-surface text-text-muted shadow-lg shadow-black/10 transition-colors hover:bg-surface-2 hover:text-text-main focus:outline-none focus:ring-2 focus:ring-primary/40 dark:shadow-black/30"
+            >
+              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                {collapsed ? "chevron_right" : "chevron_left"}
+              </span>
+            </button>
+          )}
+
+          {!collapsed && (
+            <div className="px-4 pb-2">
+              <Input
+                type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={tc("search")}
+                aria-label={tc("search")}
+                icon="search"
+                className="gap-0"
+                inputClassName="py-2 text-sm"
+              />
+            </div>
+          )}
+
+          <nav
+            aria-label={t("mainNavigation")}
             className={cn(
-              "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
-              "text-amber-500 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40",
-              collapsed ? "p-2" : "min-w-0 flex-1 px-2 py-2 text-sm"
+              "min-h-0 flex-1 overflow-y-auto py-1 custom-scrollbar",
+              collapsed ? "px-2 space-y-0.5" : "px-3"
             )}
           >
-            <span className="material-symbols-outlined text-[16px]">restart_alt</span>
-            {!collapsed && <span className="whitespace-nowrap">{t("restart")}</span>}
-          </button>
-          <button
-            onClick={() => setShowShutdownModal(true)}
-            title={t("shutdown")}
-            aria-label={t("shutdown")}
-            className={cn(
-              "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
-              "text-red-500 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40",
-              collapsed ? "p-2" : "min-w-0 flex-1 px-2 py-2 text-sm"
+            {isSearching && displaySections.length === 0 && (
+              <p className="px-2 py-3 text-xs text-text-muted/60">{tc("noResults")}</p>
             )}
+            {displaySections.map((section, idx) => {
+              const sectionId = section.id as SidebarSectionId;
+              const isExpanded = isSearching || expandedSections.has(sectionId);
+              const isPinned = pinnedSections.has(sectionId);
+              const isFirst = idx === 0;
+              const sectionItems = section.children.flatMap((child: any) =>
+                child.type === "group" ? child.items : [child]
+              );
+
+              // Collapsed (mini) mode: flat items with dividers between sections
+              if (collapsed) {
+                return (
+                  <div key={section.id}>
+                    {!isFirst && (
+                      <div className="border-t border-black/5 dark:border-white/5 my-1.5" />
+                    )}
+                    {renderSectionMenu({ ...section, children: sectionItems })}
+                  </div>
+                );
+              }
+
+              // Sections without a visible title (e.g. Home) render items directly
+              if (section.showTitle === false) {
+                return (
+                  <div key={section.id} className={cn("space-y-0.5", !isFirst && "mt-1")}>
+                    {renderSectionMenu({ ...section, children: sectionItems })}
+                  </div>
+                );
+              }
+
+              // Expanded mode: collapsible section with pin
+              return (
+                <div key={section.id} className={isFirst ? "space-y-0.5" : "mt-2"}>
+                  <div className="group/header flex min-h-9 items-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-surface/30">
+                    <button
+                      type="button"
+                      onClick={() => toggleSection(sectionId)}
+                      aria-expanded={isExpanded}
+                      aria-controls={`sidebar-section-${sectionId}`}
+                      className="flex min-w-0 flex-1 items-center gap-2 text-start"
+                    >
+                      <span className="truncate text-sm font-semibold tracking-wide text-text-muted/90 transition-colors group-hover/header:text-text-main">
+                        {section.title}
+                      </span>
+                      <span
+                        className={cn(
+                          "material-symbols-outlined ms-auto shrink-0 text-[14px] text-text-muted/55 transition-all duration-200 group-hover/header:text-text-muted",
+                          isExpanded && "rotate-180"
+                        )}
+                        aria-hidden="true"
+                      >
+                        expand_more
+                      </span>
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        togglePin(sectionId);
+                      }}
+                      aria-label={isPinned ? t("unpinSection") : t("pinSectionOpen")}
+                      type="button"
+                      title={isPinned ? t("unpinSection") : t("pinSectionOpen")}
+                      className={cn(
+                        "shrink-0 rounded p-1 transition-all",
+                        isPinned
+                          ? "text-primary opacity-100"
+                          : "text-text-muted/45 opacity-100 hover:text-text-muted"
+                      )}
+                    >
+                      <span
+                        className="material-symbols-outlined text-[12px]"
+                        style={{
+                          ...(isPinned ? { fontVariationSettings: "'FILL' 1" } : {}),
+                        }}
+                      >
+                        push_pin
+                      </span>
+                    </button>
+                  </div>
+
+                  {isExpanded && (
+                    <div id={`sidebar-section-${sectionId}`} className="mt-0.5 space-y-0.5">
+                      {renderSectionMenu(section)}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {!isE2EMode && <CloudSyncStatus collapsed={collapsed} />}
+
+          <div
+            className={cn(
+              "shrink-0 border-t border-black/5 dark:border-white/5",
+              collapsed ? "p-2 flex flex-col gap-1" : "p-2 flex gap-2"
+            )}
+            style={{
+              paddingBottom: isMacElectron
+                ? "calc(0.5rem + var(--desktop-safe-bottom))"
+                : undefined,
+            }}
           >
-            <span className="material-symbols-outlined text-[16px]">power_settings_new</span>
-            {!collapsed && <span className="whitespace-nowrap">{t("shutdown")}</span>}
-          </button>
-        </div>
-      </aside>
+            <button
+              onClick={() => setShowRestartModal(true)}
+              title={t("restart")}
+              aria-label={t("restart")}
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
+                "text-amber-500 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40",
+                collapsed ? "p-2" : "min-w-0 flex-1 px-2 py-2 text-sm"
+              )}
+            >
+              <span className="material-symbols-outlined text-[16px]">restart_alt</span>
+              {!collapsed && <span className="whitespace-nowrap">{t("restart")}</span>}
+            </button>
+            <button
+              onClick={() => setShowShutdownModal(true)}
+              title={t("shutdown")}
+              aria-label={t("shutdown")}
+              className={cn(
+                "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
+                "text-red-500 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40",
+                collapsed ? "p-2" : "min-w-0 flex-1 px-2 py-2 text-sm"
+              )}
+            >
+              <span className="material-symbols-outlined text-[16px]">power_settings_new</span>
+              {!collapsed && <span className="whitespace-nowrap">{t("shutdown")}</span>}
+            </button>
+          </div>
+        </Layout.Sider>
+      </ConfigProvider>
 
       {/* Styled tooltip for collapsed (mini) sidebar */}
       {collapsed && hoveredItem && (

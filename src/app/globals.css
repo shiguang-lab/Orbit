@@ -515,6 +515,50 @@ html[dir="rtl"] .dashboard-sidebar-mobile.translate-x-0 {
   transform: translateX(0);
 }
 
+.sidebar-sider > .ant-layout-sider-children {
+  display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+}
+
+.sidebar-menu.ant-menu {
+  border-inline-end: 0;
+  background: transparent;
+}
+
+.sidebar-menu .ant-menu-item {
+  margin-inline: 0;
+  width: 100%;
+  padding-inline: 12px !important;
+}
+
+.sidebar-menu .ant-menu-item-selected {
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent) !important;
+}
+
+.sidebar-menu .ant-menu-item-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 19px;
+}
+
+.sidebar-menu .ant-menu-title-content {
+  min-width: 0;
+}
+
+.sidebar-menu .ant-menu-item-group-title {
+  padding: 8px 12px 4px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.sidebar-menu.ant-menu-inline-collapsed .ant-menu-item {
+  padding-inline: calc(50% - 9.5px) !important;
+}
+
 /* ═══════════════════════════════════════════════════════════════
    RTL (Right-to-Left) Compatibility — fixes #7680
    ═══════════════════════════════════════════════════════════════ */
