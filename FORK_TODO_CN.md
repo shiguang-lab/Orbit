@@ -1,7 +1,7 @@
 # OmniRoute 二开变更、修复与回归台账
 
-> 记录日期：2026-08-29。
-> 核对基线：`release/v3.8.51`（commit `7c04e75e54f288cfbdca11175ddfab5ab20fe252`），
+> 最近更新：2026-08-30。
+> 上游核对基线：`upstream/release/v3.8.51`（commit `38e2baa87`），
 > 部署实例为本地构建 `local/omniroute-qodercli:3.8.50-qodercli-1.1.34-r1`（model.publib.cn）。
 > 两个问题均已在该部署实例上实测复现/验证；截至记录日，上游 main 分支均未修复。
 
@@ -40,13 +40,19 @@
 
 | ID | 上游同步合并规则 | 聚焦自动回归 | 真实环境检查 | 最近通过基线/结果 |
 |---|---|---|---|---|
-| `FORK-FIX-NARA-MODELS` | 上游触碰任一 PATCHES 文件时人工合并；若上游已原生支持 nara，优先删除重复补丁，但必须保留实时发现与失败回退行为 | `"$NODE_BIN" --import tsx/esm --import ./open-sse/utils/setupPolyfill.ts --test tests/unit/provider-sweep-live-discovery.test.ts` | Dashboard 对内置 nara 执行 Import Models，期望 `source: "api"`；断网时应为 `local_catalog` 且有诊断日志 | `release/v3.8.51` (`e399576b5`)，2026-08-30：22/22 通过 |
-| `FORK-FEAT-KIMI-REFRESH-UI` | 上游若增加等价字段，人工整合为单一实现；不得丢失新建、编辑、持久化和轮换 refresh token 的能力 | `"$NODE_BIN" --import tsx/esm --test tests/unit/web-session-credentials.test.ts` | 新建和编辑 kimi-web 后重新打开连接，refresh token 能用于 `/api/providers/[id]/refresh-token` | `release/v3.8.51` (`e399576b5`)，2026-08-30：4/4 通过 |
-| `FORK-OPS-SYNC-KIT` | `fork-sync-kit/` 为 fork 专属目录，默认保留 ours；仅在上游出现等价方案时专项迁移 | `bash -n fork-sync-kit/check_local_patches.sh fork-sync-kit/divergence_report.sh fork-sync-kit/release.sh fork-sync-kit/run_fork_regressions.sh fork-sync-kit/sync.sh && "$NODE_BIN" --check fork-sync-kit/ai_conflict_triage.mjs` | 用已同步版本执行 `sync.sh --to <release> --yes --no-build`，期望识别“已同步过”且不产生发布 | `release/v3.8.51` (`e399576b5`)，2026-08-30：语法检查通过 |
-| `FORK-OPS-GHCR-PUBLISH` | 保留 `shiguang-lab/orbit` 命名空间与 fork 分支锁豁免；吸收上游工作流更新时人工合并这些 fork 条件 | `"$NODE_BIN" --import tsx/esm --test tests/unit/workflows-no-foreign-fork-publishers.test.ts tests/unit/docker-build-memory-budget.test.ts` | Actions 成功后匿名检查 `docker buildx imagetools inspect ghcr.io/shiguang-lab/orbit:next`，必须含 amd64/arm64 | `release/v3.8.51` (`e399576b5`)，2026-08-30：7/7 通过；匿名多架构检查通过 |
+| `FORK-FIX-NARA-MODELS` | 上游触碰任一 PATCHES 文件时人工合并；若上游已原生支持 nara，优先删除重复补丁，但必须保留实时发现与失败回退行为 | `"$NODE_BIN" --import tsx/esm --import ./open-sse/utils/setupPolyfill.ts --test tests/unit/provider-sweep-live-discovery.test.ts` | Dashboard 对内置 nara 执行 Import Models，期望 `source: "api"`；断网时应为 `local_catalog` 且有诊断日志 | `upstream/release/v3.8.51` (`38e2baa87`)，2026-08-30：22/22 通过 |
+| `FORK-FEAT-KIMI-REFRESH-UI` | 上游若增加等价字段，人工整合为单一实现；不得丢失新建、编辑、持久化和轮换 refresh token 的能力 | `"$NODE_BIN" --import tsx/esm --test tests/unit/web-session-credentials.test.ts` | 新建和编辑 kimi-web 后重新打开连接，refresh token 能用于 `/api/providers/[id]/refresh-token` | `upstream/release/v3.8.51` (`38e2baa87`)，2026-08-30：4/4 通过；补齐 `vi`、`pt-BR` 文案 |
+| `FORK-OPS-SYNC-KIT` | `fork-sync-kit/` 为 fork 专属目录，默认保留 ours；仅在上游出现等价方案时专项迁移 | `bash -n fork-sync-kit/check_local_patches.sh fork-sync-kit/divergence_report.sh fork-sync-kit/release.sh fork-sync-kit/run_fork_regressions.sh fork-sync-kit/sync.sh && "$NODE_BIN" --check fork-sync-kit/ai_conflict_triage.mjs` | 用已同步版本执行 `sync.sh --to <release> --yes --no-build`，期望识别“已同步过”且不产生发布 | `upstream/release/v3.8.51` (`38e2baa87`)，2026-08-30：清单 4/4、语法检查通过 |
+| `FORK-OPS-GHCR-PUBLISH` | 保留 `shiguang-lab/orbit` 命名空间与 fork 分支锁豁免；吸收上游工作流更新时人工合并这些 fork 条件 | `"$NODE_BIN" --import tsx/esm --test tests/unit/workflows-no-foreign-fork-publishers.test.ts tests/unit/docker-build-memory-budget.test.ts` | Actions 成功后匿名检查 `docker buildx imagetools inspect ghcr.io/shiguang-lab/orbit:next`，必须含 amd64/arm64 | `upstream/release/v3.8.51` (`38e2baa87`)，2026-08-30：7/7 通过；合并官方四镜像矩阵并保留 GHCR 与内存参数 |
 
 `NODE_BIN` 默认使用当前 `PATH` 中的 `node`；同步机必须使用项目支持的 Node 22+，也可在
 `fork-sync-kit/sync.conf` 中显式指定可执行文件路径。
+
+## 上游同步记录
+
+| 日期 | fork 起点 | 上游终点 | 处理与验证 |
+|---|---|---|---|
+| 2026-08-30 | `origin/release/v3.8.51` (`e399576b5`，fork 独有 8 commits) | `upstream/release/v3.8.51` (`38e2baa87`，新增 33 commits) | 使用真实 merge commit 保留双方历史；4 项本地补丁全部健康。人工合并 Docker 工作流重复 `build-args`，保留 `ghcr.io/shiguang-lab/orbit`、webpack 与 6144 MB V8 上限；补齐 kimi refresh-token 的 `vi`、`pt-BR` 文案。二开聚焦回归 4/4 通过。 |
 
 ## 问题 1：内置 `nara`（NaraRouter）无法实时拉取模型列表（已用 workaround 绕过）
 
