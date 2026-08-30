@@ -867,14 +867,6 @@
       "count": 1
     }
   },
-  "src/app/(dashboard)/dashboard/HomePageClient.tsx": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 2
-    },
-    "react-hooks/exhaustive-deps": {
-      "count": 1
-    }
-  },
   "src/app/(dashboard)/dashboard/a2a/page.tsx": {
     "@typescript-eslint/no-unused-vars": {
       "count": 6
@@ -954,11 +946,6 @@
     }
   },
   "src/app/(dashboard)/dashboard/health/ProviderHealthAutopilotCard.tsx": {
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
-    }
-  },
-  "src/app/(dashboard)/dashboard/health/page.tsx": {
     "@typescript-eslint/no-unused-vars": {
       "count": 1
     }
@@ -2797,11 +2784,6 @@
   },
   "src/shared/components/LanguageSelector.tsx": {
     "@next/next/no-img-element": {
-      "count": 1
-    }
-  },
-  "src/shared/components/NotificationToast.tsx": {
-    "@typescript-eslint/no-unused-vars": {
       "count": 1
     }
   },

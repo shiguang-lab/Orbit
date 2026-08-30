@@ -40,9 +40,9 @@ export default function ColumnToggle({ columns = [], visible = {}, onToggle }) {
         style={{
           padding: "6px 10px",
           borderRadius: "6px",
-          border: "1px solid rgba(255,255,255,0.1)",
-          background: "rgba(255,255,255,0.05)",
-          color: "var(--text-secondary, #888)",
+          border: "1px solid var(--color-border)",
+          background: "var(--color-surface)",
+          color: "var(--color-text-muted)",
           fontSize: "13px",
           cursor: "pointer",
           display: "flex",
@@ -61,12 +61,13 @@ export default function ColumnToggle({ columns = [], visible = {}, onToggle }) {
             top: "100%",
             right: 0,
             marginTop: "4px",
-            background: "rgba(20,20,30,0.95)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "var(--color-surface)",
+            border: "1px solid var(--color-border)",
             borderRadius: "8px",
             padding: "8px",
             zIndex: 50,
-            minWidth: "160px",
+            width: "min(220px, calc(100vw - 32px))",
+            minWidth: 0,
             backdropFilter: "blur(12px)",
           }}
         >
@@ -80,9 +81,7 @@ export default function ColumnToggle({ columns = [], visible = {}, onToggle }) {
                 padding: "4px 8px",
                 cursor: "pointer",
                 fontSize: "12px",
-                color: visible[col.key]
-                  ? "var(--text-primary, #e0e0e0)"
-                  : "var(--text-secondary, #888)",
+                color: visible[col.key] ? "var(--color-text-primary)" : "var(--color-text-muted)",
                 borderRadius: "4px",
               }}
             >

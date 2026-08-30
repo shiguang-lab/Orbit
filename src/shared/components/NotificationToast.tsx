@@ -10,7 +10,7 @@
  */
 
 import { useNotificationStore } from "@/store/notificationStore";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useTranslations } from "next-intl";
 
 const ICONS = {
@@ -78,8 +78,8 @@ function Toast({ notification, onDismiss }) {
 
   const color = COLORS[notification.type] || COLORS.info;
   const textColors = {
-    title: "var(--text-primary, #fff)",
-    message: "var(--text-secondary, #ccc)",
+    title: "var(--color-text-primary, #1a1a2e)",
+    message: "var(--color-text-muted, #71717a)",
   };
 
   return (
@@ -97,8 +97,9 @@ function Toast({ notification, onDismiss }) {
         border: `1px solid ${color.border}`,
         backdropFilter: "blur(12px)",
         boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-        minWidth: "320px",
-        maxWidth: "420px",
+        width: "min(420px, calc(100vw - 32px))",
+        minWidth: 0,
+        maxWidth: "calc(100vw - 32px)",
         cursor: notification.onClick ? "pointer" : "default",
         animation: isExiting ? "toastOut 0.2s ease-in forwards" : "toastIn 0.3s ease-out forwards",
         transition: "all 0.2s ease",
@@ -133,6 +134,7 @@ function Toast({ notification, onDismiss }) {
             fontSize: "13px",
             color: textColors.message,
             lineHeight: 1.4,
+            overflowWrap: "anywhere",
           }}
         >
           {toToastText(notification.message)}
@@ -149,7 +151,7 @@ function Toast({ notification, onDismiss }) {
             background: "none",
             border: "none",
             cursor: "pointer",
-            color: "var(--text-secondary, #999)",
+            color: "var(--color-text-muted, #71717a)",
             fontSize: "16px",
             padding: "0 2px",
             lineHeight: 1,
@@ -188,8 +190,8 @@ export default function NotificationToast() {
         aria-atomic="false"
         style={{
           position: "fixed",
-          top: "20px",
-          right: "20px",
+          top: "max(12px, env(safe-area-inset-top))",
+          right: "max(12px, env(safe-area-inset-right))",
           zIndex: 9999,
           display: "flex",
           flexDirection: "column",

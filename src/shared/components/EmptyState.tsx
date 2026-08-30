@@ -70,7 +70,7 @@ export default function EmptyState({
         style={{
           fontSize: "18px",
           fontWeight: 600,
-          color: "var(--text-primary, #e0e0e0)",
+          color: "var(--color-text-primary, #1a1a2e)",
           marginBottom: "8px",
           margin: 0,
         }}
@@ -81,7 +81,7 @@ export default function EmptyState({
         <p
           style={{
             fontSize: "14px",
-            color: "var(--text-secondary, #888)",
+            color: "var(--color-text-muted, #71717a)",
             maxWidth: "320px",
             lineHeight: 1.5,
             marginTop: "8px",
@@ -99,7 +99,7 @@ export default function EmptyState({
             borderRadius: "8px",
             border: "1px solid rgba(99, 102, 241, 0.4)",
             background: "rgba(99, 102, 241, 0.15)",
-            color: "#818cf8",
+            color: "var(--color-accent, #6366f1)",
             fontSize: "14px",
             fontWeight: 500,
             cursor: "pointer",

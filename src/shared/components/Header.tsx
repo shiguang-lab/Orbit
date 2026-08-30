@@ -205,7 +205,7 @@ export default function Header({
 
   return (
     <header
-      className="sticky top-0 z-10 flex items-center justify-between border-b border-black/5 bg-bg px-8 py-4 dark:border-white/5"
+      className="sticky top-0 z-10 flex min-w-0 items-center justify-between gap-3 border-b border-black/5 bg-bg px-4 py-3 sm:px-6 sm:py-4 lg:px-8 dark:border-white/5"
       style={{
         paddingTop: isMacElectron ? "calc(1rem + var(--desktop-safe-top))" : undefined,
       }}
@@ -214,8 +214,10 @@ export default function Header({
       <div className="flex items-center gap-3 lg:hidden">
         {showMenuButton && (
           <button
+            type="button"
             onClick={onMenuClick}
-            className="text-text-main hover:text-primary transition-colors"
+            aria-label="Open sidebar"
+            className="inline-flex min-h-10 min-w-10 items-center justify-center text-text-main transition-colors hover:text-primary"
           >
             <span className="material-symbols-outlined">menu</span>
           </button>
@@ -223,7 +225,7 @@ export default function Header({
       </div>
 
       {/* Page title with icon - desktop */}
-      <div className="hidden lg:flex items-center gap-3">
+      <div className="hidden min-w-0 lg:flex items-center gap-3">
         {(icon || providerId) && (
           <div className="flex items-center justify-center size-9 rounded-lg bg-primary/10 shrink-0">
             {icon ? (
@@ -235,14 +237,19 @@ export default function Header({
         )}
         {title && (
           <div>
-            <h1 className="text-xl font-semibold text-text-main tracking-tight">{title}</h1>
+            <h1
+              className="max-w-[min(46vw,36rem)] truncate text-xl font-semibold text-text-main tracking-tight"
+              title={title}
+            >
+              {title}
+            </h1>
             {description && <p className="text-xs text-text-muted mt-0.5">{description}</p>}
           </div>
         )}
       </div>
 
       {/* Right actions */}
-      <div className="flex items-center gap-3 ml-auto">
+      <div className="ml-auto flex min-w-0 max-w-full flex-wrap items-center justify-end gap-1.5 sm:gap-2">
         {onOpenCommandPalette && (
           <>
             <button

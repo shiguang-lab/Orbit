@@ -6,7 +6,6 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Card, CardSkeleton, Button, Modal } from "@/shared/components";
-import ProviderIcon from "@/shared/components/ProviderIcon";
 import { AI_PROVIDERS, NOAUTH_PROVIDERS, OAUTH_PROVIDERS } from "@/shared/constants/providers";
 import {
   isProviderConnectionConnected,
@@ -106,7 +105,7 @@ const INLINE_LINK = "text-primary hover:underline";
 const DOCS_LINK =
   "hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border border-border text-text-muted hover:text-text-main hover:bg-bg-subtle transition-colors";
 
-export default function HomePageClient({ machineId }: HomePageClientProps) {
+export default function HomePageClient({ machineId: _machineId }: HomePageClientProps) {
   const router = useRouter();
   const isElectron = useIsElectron();
   const { openExternal } = useOpenExternal();
@@ -164,7 +163,7 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
       url: `https://github.com/diegosouzapw/OmniRoute/releases/tag/v${cleanLatest}`,
       desc: t("downloadUpdateDescription", { version: versionInfo?.current || "" }),
     };
-  }, [platform, t, versionInfo?.latest, versionInfo?.current]);
+  }, [platform, t, versionInfo]);
 
   // Electron internal auto-updater state and listeners
   const [electronUpdateStatus, setElectronUpdateStatus] = useState<{
@@ -899,7 +898,7 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
       {versionInfo?.updateAvailable && !showUpdateOverlay && (
         <div className="flex flex-col gap-3">
           <div className="flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/10 px-5 py-4 text-primary">
-            <div className="flex min-h-[48px] items-center justify-between">
+            <div className="flex min-h-[48px] flex-col items-stretch gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex min-w-0 items-center gap-4">
                 <span className="material-symbols-outlined shrink-0 text-[24px]">
                   {isElectron && electronUpdateStatus.status === "downloading"
@@ -940,7 +939,7 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
               </div>
 
               {isElectron ? (
-                <div className="flex gap-2 shrink-0 ml-4">
+                <div className="flex shrink-0 gap-2 sm:ml-4">
                   {electronUpdateStatus.status === "available" && (
                     <Button
                       size="sm"
@@ -991,7 +990,7 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
                   size="sm"
                   onClick={versionInfo.autoUpdateSupported ? handleUpdate : undefined}
                   disabled={updating || !versionInfo.autoUpdateSupported}
-                  className="ml-4 shrink-0 font-semibold"
+                  className="shrink-0 font-semibold sm:ml-4"
                   title={versionInfo.autoUpdateError || ""}
                 >
                   {versionInfo.autoUpdateSupported ? t("updateNow") : t("manualUpdate")}
@@ -1147,76 +1146,6 @@ export default function HomePageClient({ machineId }: HomePageClientProps) {
         />
       )}
     </div>
-  );
-}
-
-function ProviderOverviewCard({
-  item,
-  metrics,
-  onClick,
-}: {
-  item: ProviderSummaryItem;
-  metrics?: ProviderMetricSummary;
-  onClick: () => void;
-}) {
-  const t = useTranslations("home");
-  const tc = useTranslations("common");
-
-  const statusVariant =
-    item.errors > 0 ? "text-red-500" : item.connected > 0 ? "text-green-500" : "text-text-muted";
-
-  const authTypeConfig = {
-    "no-auth": { color: "bg-stone-500", label: t("noAuthLabel") },
-    free: { color: "bg-green-500", label: tc("free") },
-    oauth: { color: "bg-blue-500", label: t("oauthLabel") },
-    apikey: { color: "bg-amber-500", label: t("apiKeyLabel") },
-  };
-  const authInfo = authTypeConfig[item.authType] || authTypeConfig.apikey;
-
-  return (
-    <button
-      onClick={onClick}
-      className="border border-border rounded-lg p-3 hover:bg-surface/40 transition-colors text-left cursor-pointer w-full"
-    >
-      <div className="flex items-center gap-2.5">
-        <div
-          className="size-8 rounded-lg flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${item.provider.color || "#888"}15` }}
-        >
-          <ProviderIcon providerId={item.provider.id} size={26} type="color" />
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1.5">
-            <p className="text-sm font-semibold truncate">{item.provider.name}</p>
-            <span
-              className={`size-2 rounded-full ${authInfo.color} shrink-0`}
-              title={authInfo.label}
-            />
-          </div>
-          <p className={`text-xs ${statusVariant}`}>
-            {item.total === 0
-              ? tc("notConfigured")
-              : t("activeError", { active: item.connected, errors: item.errors })}
-          </p>
-          {metrics && metrics.totalRequests > 0 && (
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] text-text-muted">
-                <span className="text-emerald-500">{metrics.totalSuccesses}</span>/
-                {t("requestsShort", { count: metrics.totalRequests })}
-              </span>
-              <span className="text-[10px] text-text-muted">{metrics.successRate}%</span>
-              <span className="text-[10px] text-text-muted">~{metrics.avgLatencyMs}ms</span>
-            </div>
-          )}
-        </div>
-
-        <div className="text-right shrink-0">
-          <p className="text-xs font-medium text-text-main">{item.modelCount}</p>
-          <p className="text-[10px] text-text-muted">{tc("models")}</p>
-        </div>
-      </div>
-    </button>
   );
 }
 

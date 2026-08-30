@@ -395,7 +395,7 @@ export default function Sidebar({
     const active = !item.external && activeHref === item.href;
     const className = cn(
       "flex items-center gap-3 rounded-lg transition-all group",
-      collapsed ? "justify-center px-2 py-2.5" : "px-3 py-1.5",
+      collapsed ? "min-h-10 justify-center px-2 py-2.5" : "min-h-10 px-3 py-2",
       active
         ? "bg-primary/10 text-primary"
         : "text-text-muted hover:bg-surface/50 hover:text-text-main"
@@ -597,8 +597,16 @@ export default function Sidebar({
                 <div
                   className="flex items-center gap-0.5 px-2 py-1 rounded-md hover:bg-surface/30 transition-colors cursor-pointer group/header"
                   onClick={() => toggleSection(sectionId)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      toggleSection(sectionId);
+                    }
+                  }}
                   role="button"
+                  tabIndex={0}
                   aria-expanded={isExpanded}
+                  aria-controls={`sidebar-section-${sectionId}`}
                 >
                   <span className="flex-1 text-[10px] font-semibold text-text-muted/60 uppercase tracking-wider group-hover/header:text-text-muted/90 transition-colors">
                     {section.title}
@@ -610,6 +618,8 @@ export default function Sidebar({
                       e.stopPropagation();
                       togglePin(sectionId);
                     }}
+                    aria-label={isPinned ? t("unpinSection") : t("pinSectionOpen")}
+                    type="button"
                     title={isPinned ? t("unpinSection") : t("pinSectionOpen")}
                     className={cn(
                       "p-0.5 rounded transition-all shrink-0",
@@ -640,7 +650,7 @@ export default function Sidebar({
                 </div>
 
                 {isExpanded && (
-                  <div className="mt-0.5 space-y-0.5">
+                  <div id={`sidebar-section-${sectionId}`} className="mt-0.5 space-y-0.5">
                     {section.children.map((child: any) => {
                       if (child.type === "group") {
                         if (child.items.length === 0) return null;

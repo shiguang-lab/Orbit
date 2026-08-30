@@ -592,8 +592,8 @@ const ProviderCard = forwardRef<ProviderCardHandle, ProviderCardProps>(function 
             )}
 
             {/* Row 3 — Footer: connection status + controls (toggle, test) */}
-            <div className="flex items-center justify-between gap-2 mt-auto pt-1.5 border-t border-border/40">
-              <div className="flex items-center gap-1.5 text-xs flex-nowrap min-w-0 overflow-hidden">
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-border/40 pt-1.5">
+              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5 text-xs">
                 {allDisabled ? (
                   <Badge variant="default" size="sm">
                     <span className="flex items-center gap-1">

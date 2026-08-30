@@ -61,7 +61,6 @@ export default function HealthPage() {
   const locale = useLocale();
   const t = useTranslations("health");
   const tc = useTranslations("common");
-  const tp = useTranslations("providers");
   const nodeMap = useProviderNodeMap();
   const [data, setData] = useState(null);
   const [dbHealth, setDbHealth] = useState(null);
@@ -271,13 +270,11 @@ export default function HealthPage() {
       {/* Verdict Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">
-          {
-            data.status === "healthy"
-              ? t("healthVerdictReady")
-              : data.status === "cooling"
-                ? t("healthVerdictCoolingDown")
-                : t("healthVerdictActionRequired")
-          }
+          {data.status === "healthy"
+            ? t("healthVerdictReady")
+            : data.status === "cooling"
+              ? t("healthVerdictCoolingDown")
+              : t("healthVerdictActionRequired")}
         </h1>
         <p className="text-text-muted text-lg">{t("healthSubtitle")}</p>
       </div>
@@ -300,9 +297,7 @@ export default function HealthPage() {
           {data.status === "healthy" ? "check_circle" : "error"}
         </span>
         <span className={data.status === "healthy" ? "text-green-400" : "text-red-400"}>
-          {data.status === "healthy"
-            ? t("allOperational")
-            : t("issuesDetected")}
+          {data.status === "healthy" ? t("allOperational") : t("issuesDetected")}
         </span>
       </div>
 
@@ -669,7 +664,7 @@ export default function HealthPage() {
                   className={`rounded-lg p-3 border ${bg} flex flex-col gap-2`}
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold capitalize flex items-center gap-2 text-(--text-primary,#fff)">
+                    <span className="flex items-center gap-2 text-sm font-semibold capitalize text-text-main">
                       <span className={`w-2 h-2 rounded-full ${dot}`}></span>
                       {feat.feature}
                     </span>
@@ -677,7 +672,7 @@ export default function HealthPage() {
                       {feat.level}
                     </span>
                   </div>
-                  <div className="text-xs text-(--text-secondary,#aaa)">{feat.capability}</div>
+                  <div className="text-xs text-text-muted">{feat.capability}</div>
                   {feat.reason && (
                     <div
                       className="text-[10px] text-red-300 mt-1 bg-red-900/20 p-1.5 rounded"
@@ -686,7 +681,7 @@ export default function HealthPage() {
                       {feat.reason.length > 80 ? feat.reason.substring(0, 80) + "..." : feat.reason}
                     </div>
                   )}
-                  <div className="text-[10px] text-(--text-muted,#666) text-right mt-1">
+                  <div className="mt-1 text-right text-[10px] text-text-muted">
                     {t("sinceTime", {
                       time: new Date(feat.since).toLocaleTimeString(locale),
                     })}

@@ -16,7 +16,7 @@ import Link from "next/link";
 export default function ForbiddenPage() {
   const t = useTranslations("auth");
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6 bg-[var(--bg-primary,#0a0a0f)] text-[var(--text-primary,#e0e0e0)] text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-bg p-6 text-center text-text-main">
       <div
         className="text-[96px] font-extrabold leading-none mb-2"
         style={{
@@ -28,7 +28,7 @@ export default function ForbiddenPage() {
         403
       </div>
       <h1 className="text-2xl font-semibold mb-2">{t("accessDenied")}</h1>
-      <p className="text-[15px] text-[var(--text-secondary,#888)] max-w-[400px] leading-relaxed mb-8">
+      <p className="mb-8 max-w-[400px] text-[15px] leading-relaxed text-text-muted">
         {t("accessDeniedDescription")}
       </p>
       <Link

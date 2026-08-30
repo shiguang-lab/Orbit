@@ -70,7 +70,12 @@ export default function CheaperInferenceSponsorBanner() {
     >
       <div className="flex min-w-0 items-start gap-3">
         <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#31f889]/10">
-          <ProviderIcon providerId="cheaperinference" size={24} type="color" />
+          <ProviderIcon
+            providerId="cheaperinference"
+            size={24}
+            type="color"
+            className="text-[#0b7a45] dark:text-[#5cf0a6]"
+          />
         </div>
         <div className="min-w-0">
           <p className="text-sm font-semibold text-text-main">{t("title")}</p>

@@ -65,8 +65,8 @@ export default function BurnRateChartInner({ usage }: BurnRateChartInnerProps) {
             <YAxis hide />
             <Tooltip
               contentStyle={{
-                background: "var(--bg-surface, #1e1e2e)",
-                border: "1px solid var(--border)",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
                 fontSize: 10,
               }}
             />

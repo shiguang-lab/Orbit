@@ -67,11 +67,13 @@ export default function LanguageSelector() {
       {/* Trigger button */}
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-sm font-medium text-text-main hover:bg-surface-hover transition-all border border-transparent hover:border-border"
+        className="flex min-h-10 items-center gap-1.5 rounded-lg border border-transparent px-2 py-1.5 text-sm font-medium text-text-main transition-all hover:border-border hover:bg-surface-hover sm:px-2.5"
         title={currentLang.name}
       >
         <CountryFlag emoji={currentLang.flag} alt={currentLang.name} />
-        <span className="text-xs font-semibold tracking-wide">{currentLang.label}</span>
+        <span className="hidden text-xs font-semibold tracking-wide sm:inline">
+          {currentLang.label}
+        </span>
         <span
           className={`material-symbols-outlined text-[14px] text-text-muted transition-transform ${open ? "rotate-180" : ""}`}
         >

@@ -122,7 +122,9 @@ function getLabel(segment, t) {
 export default function Breadcrumbs() {
   const pathname = usePathname();
   const t = useTranslations("breadcrumbs");
-  if (!pathname || pathname === "/dashboard") return null;
+  // The home route already exposes its page title in Header; repeating “首页”
+  // as a breadcrumb adds noise and pushes the first card down on mobile.
+  if (!pathname || pathname === "/dashboard" || pathname === "/home") return null;
 
   const segments = pathname.split("/").filter(Boolean);
   const crumbs = segments.map((seg, idx) => ({
@@ -137,9 +139,10 @@ export default function Breadcrumbs() {
       style={{
         display: "flex",
         alignItems: "center",
+        flexWrap: "wrap",
         gap: "6px",
         fontSize: "13px",
-        color: "var(--text-secondary, #888)",
+        color: "var(--color-text-muted, #71717a)",
         padding: "8px 0",
         marginBottom: "8px",
       }}
@@ -154,7 +157,7 @@ export default function Breadcrumbs() {
           {crumb.isLast ? (
             <span
               aria-current="page"
-              style={{ color: "var(--text-primary, #e0e0e0)", fontWeight: 500 }}
+              style={{ color: "var(--color-text-primary, #1a1a2e)", fontWeight: 500 }}
             >
               {crumb.label}
             </span>
@@ -162,7 +165,7 @@ export default function Breadcrumbs() {
             <Link
               href={crumb.href}
               style={{
-                color: "var(--text-secondary, #888)",
+                color: "var(--color-text-muted, #71717a)",
                 textDecoration: "none",
                 transition: "color 0.15s",
               }}
@@ -170,7 +173,7 @@ export default function Breadcrumbs() {
                 ((e.currentTarget as HTMLElement).style.color = "var(--accent, #818cf8)")
               }
               onMouseLeave={(e) =>
-                ((e.currentTarget as HTMLElement).style.color = "var(--text-secondary, #888)")
+                ((e.currentTarget as HTMLElement).style.color = "var(--color-text-muted, #71717a)")
               }
             >
               {crumb.label}

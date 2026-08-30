@@ -143,13 +143,13 @@ export function CostTrendCard({
             <CartesianGrid stroke="rgba(255,255,255,0.06)" vertical={false} />
             <XAxis
               dataKey="date"
-              tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+              tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
               axisLine={false}
               tickLine={false}
               interval={Math.max(Math.floor(chartRows.length / 8), 0)}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+              tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(value) => currencyFormatter.format(value).replace(".00", "")}
@@ -204,12 +204,12 @@ export function WeeklyPatternCard({
           <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 11, fill: "var(--text-muted)" }}
+              tick={{ fontSize: 11, fill: "var(--color-text-muted)" }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis
-              tick={{ fontSize: 10, fill: "var(--text-muted)" }}
+              tick={{ fontSize: 10, fill: "var(--color-text-muted)" }}
               axisLine={false}
               tickLine={false}
               tickFormatter={(value) =>
