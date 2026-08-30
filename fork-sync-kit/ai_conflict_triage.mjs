@@ -328,6 +328,11 @@ async function runChangelog(base, target) {
       .filter(Boolean),
   );
   const overlap = localTouched.filter((f) => upstreamFiles.has(f));
+  const ledgerPath = path.join(repo, "FORK_TODO_CN.md");
+  const ledger = fs.existsSync(ledgerPath) ? fs.readFileSync(ledgerPath, "utf8") : "";
+  const ledgerExcerpt =
+    ledger.match(/## 当前有效变更索引[\s\S]*?(?=\n## 问题 1：|$)/)?.[0] ??
+    "未找到当前有效变更索引";
 
   if (!process.env.AI_API_KEY) {
     const fallback = [
@@ -336,6 +341,10 @@ async function runChangelog(base, target) {
       `- 上游 commit 数：${commits.length}`,
       `- 本地触碰文件与上游变更文件交集（${overlap.length}）：`,
       ...overlap.map((f) => `  - ${f}`),
+      "",
+      "## 二开有效变更、合并规则与回归矩阵",
+      "",
+      ledgerExcerpt,
       "",
     ].join("\n");
     fs.writeFileSync(outFile, fallback);
@@ -348,13 +357,15 @@ async function runChangelog(base, target) {
       role: "system",
       content:
         "你是资深工程助理。一个开源项目的下游 fork 正在合入上游新版本。" +
-        "输入：上游 commit 列表、本地 fork 触碰过的文件（含 [OMNI] 补丁与钩子）、两者的交集文件。" +
-        '请输出 markdown 简报，包含三节：1) 上游变更摘要（按主题归组，不逐条罗列）；' +
-        '2) 对本地二开的影响评估（重点分析交集文件与本地 [OMNI] 补丁相关主题）；3) 建议人工关注的点（排序，最多 5 条）。中文，简洁。',
+        "输入：上游 commit 列表、本地 fork 触碰过的文件（含 [OMNI] 补丁与钩子）、两者的交集文件，以及二开有效变更、合并规则与回归矩阵。" +
+        '请输出 markdown 简报，包含四节：1) 上游变更摘要（按主题归组，不逐条罗列）；' +
+        '2) 逐个二开 ID 给出明确处置（保留/人工整合/改用上游/无影响）及依据；' +
+        '3) 本次必须执行的聚焦回归与额外真实环境检查；4) 建议人工关注的点（排序，最多 5 条）。' +
+        "不得在没有证据时建议丢弃二开行为。中文，简洁。",
     },
     {
       role: "user",
-      content: `范围: ${base} → ${target}\n上游 commit（${commits.length}）:\n${commits.slice(0, 200).join("\n")}\n\n本地触碰文件（${localTouched.length}）:\n${localTouched.slice(0, 200).join("\n")}\n\n交集文件（${overlap.length}）:\n${overlap.slice(0, 100).join("\n")}`,
+      content: `范围: ${base} → ${target}\n上游 commit（${commits.length}）:\n${commits.slice(0, 200).join("\n")}\n\n本地触碰文件（${localTouched.length}）:\n${localTouched.slice(0, 200).join("\n")}\n\n交集文件（${overlap.length}）:\n${overlap.slice(0, 100).join("\n")}\n\n二开台账:\n${ledgerExcerpt.slice(0, 20000)}`,
     },
   ]);
   fs.writeFileSync(outFile, `# 上游变更简报（${base} → ${target}）\n\n${content}\n`);

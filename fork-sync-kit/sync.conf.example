@@ -14,7 +14,9 @@ AUTO_ACCEPT_PATCH="false"
 # 接受同步后自动推送 main 与 synced/vendor 标签到 fork 自己的远端（origin）。
 # sync.sh 会先预检：本地 main 落后 origin/main 时拒绝同步，须先 git pull --ff-only。
 PUSH_AFTER_ACCEPT="true"
-# 合入后的本地验证命令（无 GitHub CI，这就是唯一的质量闸门，强烈建议配置）
+# 二开聚焦回归使用的 Node 22+ 可执行文件；默认从 PATH 解析。
+NODE_BIN="node"
+# 合入后的全局验证命令（与二开聚焦回归共同构成质量闸门，强烈建议配置）
 # 示例：TEST_CMD="npm ci --no-audit && npm run build && npm test -- --run"
 TEST_CMD=""
 

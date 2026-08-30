@@ -98,6 +98,7 @@ export default function AddApiKeyModal({
   const isChatGptWebCodex = provider === "chatgpt-web-codex";
   const isAwsPolly = provider === "aws-polly";
   const webSessionCredential = getWebSessionCredentialRequirement(provider);
+  const refreshTokenCredential = webSessionCredential && webSessionCredential.kind !== "none" ? webSessionCredential.refreshToken : undefined;
   const isNoAuthWebSessionCredential = webSessionCredential?.kind === "none";
   const isWebSessionCredential = !!webSessionCredential && webSessionCredential.kind !== "none";
   // #6268 — for web-session providers, resolve the provider's public site so the
@@ -403,8 +404,7 @@ export default function AddApiKeyModal({
       };
       // [OMNI] kimi-web-refresh-ui — persist an operator-supplied refresh_token so the
       // executor's renewal loop (kimi-web reads providerSpecificData.refreshToken) can
-      // rotate the access token without a management-API patch after creation.
-      if (webSessionCredential?.refreshToken && formData.refreshToken.trim()) {
+      if (refreshTokenCredential && formData.refreshToken.trim()) {
         mergedProviderSpecificData.refreshToken = formData.refreshToken.trim();
       }
 
@@ -830,13 +830,13 @@ export default function AddApiKeyModal({
             })()}
             {/* [OMNI] kimi-web-refresh-ui — optional refresh_token input for providers
                 whose executor renews the access token from it (e.g. kimi-web). */}
-            {webSessionCredential?.refreshToken && (
+            {refreshTokenCredential && (
               <Input
                 label={t("refreshTokenOptionalLabel")}
                 type="password"
                 value={formData.refreshToken}
                 onChange={(e) => setFormData({ ...formData, refreshToken: e.target.value })}
-                placeholder={webSessionCredential.refreshToken.placeholder}
+                placeholder={refreshTokenCredential.placeholder}
                 hint={t("refreshTokenOptionalHint")}
                 autoComplete="off"
                 spellCheck={false}
