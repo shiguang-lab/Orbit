@@ -460,7 +460,7 @@ export default function Sidebar({
       <aside
         ref={sidebarRef}
         className={cn(
-          "flex h-full min-h-0 flex-col border-r border-black/5 bg-sidebar transition-all duration-300 ease-in-out dark:border-white/5",
+          "relative flex h-full min-h-0 flex-col border-r border-black/5 bg-sidebar transition-all duration-300 ease-in-out dark:border-white/5",
           collapsed ? "w-16" : "w-[min(88vw,260px)]"
         )}
         style={{ paddingTop: isMacElectron ? "var(--desktop-safe-top)" : undefined }}
@@ -472,7 +472,7 @@ export default function Sidebar({
           {t("skipToContent")}
         </a>
 
-        <div className={cn("relative", collapsed ? "px-2 pb-3 pt-10" : "px-4 pb-3 pt-4")}>
+        <div className={cn("relative", collapsed ? "px-2 pb-3 pt-4" : "px-4 pb-3 pt-4")}>
           <Link
             href="/home"
             prefetch={false}
@@ -498,23 +498,22 @@ export default function Sidebar({
               </div>
             )}
           </Link>
-          {onToggleCollapse && (
-            <button
-              onClick={onToggleCollapse}
-              title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-              aria-expanded={!collapsed}
-              aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-              className={cn(
-                "absolute rounded-md p-1.5 text-text-muted/65 transition-colors hover:bg-black/5 hover:text-text-main dark:hover:bg-white/5",
-                collapsed ? "end-1.5 top-2" : "end-2 top-3"
-              )}
-            >
-              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
-                {collapsed ? "chevron_right" : "chevron_left"}
-              </span>
-            </button>
-          )}
         </div>
+
+        {onToggleCollapse && (
+          <button
+            type="button"
+            onClick={onToggleCollapse}
+            title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+            className="absolute end-[-20px] top-1/2 z-40 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-surface text-text-muted shadow-lg shadow-black/10 transition-colors hover:bg-surface-2 hover:text-text-main focus:outline-none focus:ring-2 focus:ring-primary/40 dark:shadow-black/30"
+          >
+            <span className="material-symbols-outlined text-[22px]" aria-hidden="true">
+              {collapsed ? "chevron_right" : "chevron_left"}
+            </span>
+          </button>
+        )}
 
         {!collapsed && (
           <div className="px-4 pb-2">
@@ -582,7 +581,7 @@ export default function Sidebar({
                     aria-controls={`sidebar-section-${sectionId}`}
                     className="flex min-w-0 flex-1 items-center gap-2 text-start"
                   >
-                    <span className="truncate text-xs font-semibold tracking-wide text-text-muted/80 transition-colors group-hover/header:text-text-main">
+                    <span className="truncate text-sm font-semibold tracking-wide text-text-muted/90 transition-colors group-hover/header:text-text-main">
                       {section.title}
                     </span>
                     <span

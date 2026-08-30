@@ -530,8 +530,8 @@ export default function ConnectionRow({
     <div
       className={`group flex flex-col gap-3 rounded-lg p-3 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${connection.isActive === false ? "opacity-60" : ""}`}
     >
-      <div className="flex min-w-0 flex-col gap-3 xl:flex-row xl:items-start">
-        <div className="flex min-w-0 flex-1 items-start gap-3">
+      <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:gap-5">
+        <div className="flex min-w-0 flex-[1_1_560px] items-start gap-3">
           {onToggleSelect && (
             <input
               type="checkbox"
@@ -541,24 +541,24 @@ export default function ConnectionRow({
             />
           )}
           {/* Priority arrows */}
-          <div className="flex flex-col">
+          <div className="flex shrink-0 flex-col pt-0.5">
             <button
               onClick={onMoveUp}
               disabled={isFirst}
               aria-label={t("moveUp")}
               title={t("moveUp")}
-              className={`rounded p-1 ${isFirst ? "cursor-not-allowed text-text-muted/30" : "text-text-muted hover:bg-sidebar hover:text-primary"}`}
+              className={`flex h-7 w-7 items-center justify-center rounded p-1 ${isFirst ? "cursor-not-allowed text-text-muted/30" : "text-text-muted hover:bg-sidebar hover:text-primary"}`}
             >
-              <span className="material-symbols-outlined text-sm">keyboard_arrow_up</span>
+              <span className="material-symbols-outlined text-[18px]">keyboard_arrow_up</span>
             </button>
             <button
               onClick={onMoveDown}
               disabled={isLast}
               aria-label={t("moveDown")}
               title={t("moveDown")}
-              className={`rounded p-1 ${isLast ? "cursor-not-allowed text-text-muted/30" : "text-text-muted hover:bg-sidebar hover:text-primary"}`}
+              className={`flex h-7 w-7 items-center justify-center rounded p-1 ${isLast ? "cursor-not-allowed text-text-muted/30" : "text-text-muted hover:bg-sidebar hover:text-primary"}`}
             >
-              <span className="material-symbols-outlined text-sm">keyboard_arrow_down</span>
+              <span className="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
             </button>
           </div>
           <span className="material-symbols-outlined text-base text-text-muted">
@@ -856,7 +856,7 @@ export default function ConnectionRow({
             </div>
           </div>
         </div>
-        <div className="flex w-full shrink-0 flex-wrap items-center justify-end gap-2 xl:w-auto xl:max-w-[48%] xl:pt-0.5">
+        <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 xl:w-auto xl:flex-[0_1_auto] xl:justify-end xl:pt-0.5 2xl:flex-nowrap">
           <Button
             size="sm"
             variant="ghost"
@@ -941,10 +941,14 @@ export default function ConnectionRow({
             </Button>
           )}
           <Toggle
-            size="sm"
+            size="md"
             checked={connection.isActive ?? true}
             onChange={onToggleActive}
+            ariaLabel={
+              (connection.isActive ?? true) ? t("disableConnection") : t("enableConnection")
+            }
             title={(connection.isActive ?? true) ? t("disableConnection") : t("enableConnection")}
+            className="shrink-0"
           />
           <div className="flex gap-1 ms-1 transition-opacity">
             {onReauth && (
