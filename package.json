@@ -86,6 +86,7 @@
   "homepage": "https://omniroute.online",
   "scripts": {
     "dev": "node --max-old-space-size=8192 scripts/dev/run-next.mjs dev",
+    "dev:nas": "cross-env OMNIROUTE_DEV_API_PROXY=http://100.87.115.78:20128 PORT=30128 OMNIROUTE_USE_TURBOPACK=0 npm run dev",
     "prebuild:docs": "node scripts/docs/gen-openapi-module.mjs",
     "gen:provider-reference": "bun scripts/docs/gen-provider-reference.ts",
     "bench:compression": "bun scripts/compression/benchmark.ts",
