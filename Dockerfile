@@ -135,8 +135,13 @@ RUN test -f package-lock.json \
 # stage above produces the native library with patched Go, and the COPY below
 # installs it deterministically. A missing output still fails the build before
 # the application bundle is produced.
+# Transformers.js is an optional runtime feature, but Next still resolves its
+# lazy import during the server bundle. Keep the package available in Docker
+# builds even when npm prunes an optional dependency closure on this platform.
 RUN --mount=type=cache,id=s/92ca8a61-c1ba-421f-a389-d48ac7258c2d-npm-cache,target=/root/.npm \
   npm ci --include=optional --no-audit --no-fund --legacy-peer-deps --ignore-scripts \
+  && npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund \
+    @huggingface/transformers@4.2.0 \
   && (cd node_modules/better-sqlite3 \
       && node /usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild) \
   && node -e "require('better-sqlite3')(':memory:').close()"
