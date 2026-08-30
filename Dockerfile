@@ -141,13 +141,6 @@ RUN --mount=type=cache,id=s/92ca8a61-c1ba-421f-a389-d48ac7258c2d-npm-cache,targe
       && node /usr/local/lib/node_modules/npm/node_modules/node-gyp/bin/node-gyp.js rebuild) \
   && node -e "require('better-sqlite3')(':memory:').close()"
 
-# Transformers.js is an optional runtime feature, but Next still resolves its
-# lazy import during the server bundle. Keep the package available in Docker
-# builds even when npm prunes an optional dependency closure on this platform.
-RUN --mount=type=cache,id=s/92ca8a61-c1ba-421f-a389-d48ac7258c2d-npm-cache,target=/root/.npm \
-  npm install --no-save --package-lock=false --ignore-scripts --no-audit --no-fund \
-    @huggingface/transformers@4.2.0
-
 # Use the reproducibly rebuilt, Go-patched library instead of the vulnerable
 # prebuilt release asset downloaded by tls-client-node's postinstall script.
 COPY --from=tls-client-builder /out/ /app/node_modules/tls-client-node/bin/
