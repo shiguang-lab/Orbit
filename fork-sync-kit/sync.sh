@@ -30,6 +30,8 @@ source "$CONF"
 UPSTREAM_TAG_PREFIX="${UPSTREAM_TAG_PREFIX:-release/v}"
 AUTO_ACCEPT_PATCH="${AUTO_ACCEPT_PATCH:-false}"
 TEST_CMD="${TEST_CMD:-}"
+NODE_BIN="${NODE_BIN:-node}"
+export NODE_BIN
 mkdir -p "$REPORTS"
 
 TO="" YES=0 NO_BUILD=0 NO_PUSH=0 CONT=0 STATUS=0 ABORT=0
@@ -244,7 +246,7 @@ EOF
   fi
 fi
 
-# ---------- 5. 门禁：补丁核对 / 本地测试 ----------
+# ---------- 5. 门禁：补丁核对 / 二开聚焦回归 / 全局测试 ----------
 
 patch_rc=0
 bash "$KIT_DIR/check_local_patches.sh" --against "$target" --out "$REPORTS/$ts-$safe_target-patches.md" || patch_rc=$?
@@ -253,6 +255,15 @@ bash "$KIT_DIR/divergence_report.sh" "vendor/$target" HEAD --out "$REPORTS/$ts-$
 if [[ $patch_rc -ne 0 ]]; then
   err "补丁核对失败（有丢失的本地补丁），阻塞接受。报告 $REPORTS/$ts-$safe_target-patches.md"
   notify "OmniRoute 同步 ${target}：补丁核对失败，阻塞"
+  exit 1
+fi
+
+regression_report="$REPORTS/$ts-$safe_target-fork-regressions.md"
+regression_rc=0
+bash "$KIT_DIR/run_fork_regressions.sh" --out "$regression_report" || regression_rc=$?
+if [[ $regression_rc -ne 0 ]]; then
+  err "二开聚焦回归失败，阻塞接受。报告 $regression_report"
+  notify "OmniRoute 同步 ${target}：二开聚焦回归失败，阻塞"
   exit 1
 fi
 
@@ -288,6 +299,7 @@ if [[ $accept -ne 1 ]]; then
 - AI 简报: $( [[ -f "$brief_file" ]] && echo "$brief_file" || echo 无 )
 - 冲突分诊: $( [[ -f "$REPORTS/$ts-$safe_target-triage.md" ]] && echo "$REPORTS/$ts-$safe_target-triage.md" || echo 无冲突 )
 - 补丁核对 / 分叉度: $REPORTS/$ts-$safe_target-patches.md / $REPORTS/$ts-$safe_target-divergence.md
+- 二开聚焦回归: $regression_report
 - 接受并发布: sync.sh --continue --yes $([[ $NO_BUILD -eq 1 ]] && echo --no-build)
 - 放弃: sync.sh --abort
 EOF
@@ -307,6 +319,7 @@ cat > "$report" <<EOF
 - AI 简报: $( [[ -f "$brief_file" ]] && echo "$brief_file" || echo 无 )
 - 冲突分诊: $( [[ -f "$REPORTS/$ts-$safe_target-triage.md" ]] && echo "$REPORTS/$ts-$safe_target-triage.md" || echo 无冲突 )
 - 补丁核对 / 分叉度: $REPORTS/$ts-$safe_target-patches.md / $REPORTS/$ts-$safe_target-divergence.md
+- 二开聚焦回归: $regression_report
 EOF
 log "已接受 ${target}（synced 标签就位）"
 notify "OmniRoute 已接受上游 $target"

@@ -1,14 +1,14 @@
 # OmniRoute Fork 二开与上游自动同步方案（本地驱动版）
 
 > 记录日期：2026-08-29。
-> 关联文档：`FORK_TODO_CN.md`（二开问题清单，其中"每次追上游后需人工核对"的步骤由本方案自动化）、
+> 关联文档：`FORK_TODO_CN.md`（二开变更、合并规则与回归台账，其中每次追上游后的核对与聚焦回归由本方案自动化）、
 > `OMNIROUTE_DEPLOYMENT_CN.md`（源码构建与 NAS 部署，`release.sh` 按其 §4.4 的 `runner-base` 目标构建）。
 > 配套工件：`fork-sync-kit/`（复制进 fork 仓库即可使用，清单见 §5）。
 
 ## 0. 结论（TL;DR）
 
 1. **治理结构先行**：趁当前与上游分叉≈0（仅 2 项待落地的补丁，见 FORK_TODO_CN.md），
-   一次性建立"local/ 本地代码区 + 薄钩子 + `[OMNI]` 标记 + 补丁清单"四件套（约 0.5 天）。
+   一次性建立"local/ 本地代码区 + 薄钩子 + `[OMNI]` 标记 + 补丁清单 + 变更/回归台账"五件套（约 0.5 天）。
    此后无论二开规模多大，"我们改了什么"永远是一个 `git diff vendor/<版本> main` 能精确回答的问题。
 2. **同步自动化全部定义在本地**：本地编排器 `sync.sh` 完成 检测上游 release → 合并 →
    AI 分诊冲突（机械冲突自动解，语义冲突留给人）→ 门禁检查 → 确认接受 → 打 `synced` 标签 →
@@ -16,7 +16,7 @@
    上游虽托管在 GitHub，但**不依赖任何 GitHub 工作流**，fork 远端可以是任意 Git 服务（内网 GitLab 等）。
 3. **分级合并**：patch 全自动（`AUTO_ACCEPT_PATCH`，演练后打开）、minor 交互确认、major 人工专项。
    AI 只允许解"整文件所有冲突块均可机械合并"的文件——这是 AI 自动化的安全边界；
-   无 CI 平台的情况下，`sync.conf` 里的 `TEST_CMD` 就是唯一质量闸门，必须配置。
+   无 CI 平台的情况下，二开聚焦回归与 `sync.conf` 里的 `TEST_CMD` 共同构成质量闸门。
 4. **安全修复走快车道**（`sync.sh --to <tag>` 即时摘取）；**普适改动持续回流上游**
    （每回流一个，本地补丁永久少一个）。
 
@@ -50,13 +50,15 @@
 [sync.sh 本地编排器]
   1. 最新 tag 已有 synced/ 标签？ ── 是 → 结束（无新版本）
   2. 分级 patch/minor/major（major 与无基线首同步 → 人工专项，止步）
-  3. 分叉纪律自检：相对 vendor/<last> 改过但无 [OMNI] 标记的文件 → 拒绝自动接受
-  4. 在 main 上 git merge --no-ff（基线 sha 记入 .fork-sync/state，随时 --abort 回滚）
-  5. AI 变更简报（changelog × 本地触碰文件交集）
-  6. 有冲突 → AI 分诊：机械冲突自动解；语义冲突保留标记（文件级全有全无）
-  7. 门禁：check_local_patches.sh（补丁丢失=阻塞）
-           + TEST_CMD 本地构建/测试（必须配置，见 §4.3）
-  8. 决策：patch+无冲突+测试绿+AUTO_ACCEPT_PATCH → 自动接受；
+  3. 加载 FORK_TODO_CN.md 当前有效变更及其上游合并规则
+  4. 分叉纪律自检：相对 vendor/<last> 改过但无 [OMNI] 标记的文件 → 拒绝自动接受
+  5. 在 main 上 git merge --no-ff（基线 sha 记入 .fork-sync/state，随时 --abort 回滚）
+  6. AI 变更简报（changelog × 本地触碰文件交集 × 二开变更台账）
+  7. 有冲突 → AI 分诊：机械冲突自动解；语义冲突保留标记（文件级全有全无）
+  8. 门禁：check_local_patches.sh（补丁丢失=阻塞）
+           + run_fork_regressions.sh（每项二开聚焦回归，清单不一致或失败=阻塞）
+           + TEST_CMD 全局构建/测试（必须配置，见 §3.5）
+  9. 决策：patch+无冲突+测试绿+AUTO_ACCEPT_PATCH → 自动接受；
            否则交互确认（TTY）/ 写报告待人工（--continue 接受，--abort 放弃）
       │ 接受
       ▼
@@ -131,15 +133,32 @@ import { KimiRefreshTokenField } from "@/local/components/KimiRefreshTokenField"
   - **丢失**：工作区该文件缺锚点 → 补丁没重放成功，**阻塞接受**（exit 1）；
   - **可删**：上游已含同判定特征 → 提示"上游已原生修复"，删除动作在本次同步内人工确认执行。
 
-### 3.4 本地质量门禁与分叉度 KPI
+### 3.4 二开变更台账与聚焦回归（FORK_TODO_CN.md + REGRESSIONS.tsv）
+
+`FORK_TODO_CN.md` 是全部 fork 专属行为的长期台账。新增功能、行为变更、问题修复以及
+发布/部署行为变更，必须在实现的同一个 commit/PR 中登记：稳定 ID、验收标准、影响范围、
+`PATCHES.tsv` ID、上游合并规则、自动回归命令、真实环境检查和最近通过基线。
+
+`fork-sync-kit/REGRESSIONS.tsv` 是台账中聚焦回归命令的可执行镜像；每行 3 列：
+`ID / 说明 / 命令`。`run_fork_regressions.sh` 在每次同步接受前执行以下强制检查：
+
+1. `FORK_TODO_CN.md`“当前有效变更索引”的 ID 与 `REGRESSIONS.tsv` 必须一一对应；漏登记或
+   多余命令均阻塞，防止只改代码、不补台账，或移除功能后留下失效测试。
+2. 全部聚焦回归逐项执行并写入本次同步报告；任一失败即阻塞接受和发布。
+3. 聚焦回归只保护 fork 专属行为，不能替代全局 `TEST_CMD`。两层都绿才允许接受。
+4. 若上游提供等价实现，先按台账验收标准验证上游版本，再删除本地补丁并把条目标为
+   “已由上游替代”；保留历史记录，避免后续版本重复引入。
+
+### 3.5 本地质量门禁与分叉度 KPI
 
 没有 CI 平台，门禁全部内置在 `sync.sh` 接受之前：
 
-1. **`TEST_CMD` 本地验证**（sync.conf 配置，如 `npm ci && npm run build && npm test -- --run`）——
+1. **二开聚焦回归**（§3.4）——台账和清单必须一致，逐项测试必须通过。
+2. **`TEST_CMD` 本地验证**（sync.conf 配置，如 `npm ci && npm run build && npm test -- --run`）——
    失败即阻塞，这是自动化的最后一道闸门，**必须配置**。
-2. **标记纪律自检**（§3.2 第 4 条）。
-3. **补丁核对**（§3.3）。
-4. **分叉度 KPI**（`divergence_report.sh`，写入每次同步报告）：
+3. **标记纪律自检**（§3.2 第 4 条）。
+4. **补丁核对**（§3.3）。
+5. **分叉度 KPI**（`divergence_report.sh`，写入每次同步报告）：
    触碰的上游文件数、相对 `vendor/*` 的 diff 行数、`[OMNI]` 补丁数。
    阈值告警：**触碰上游文件 > 40 或补丁数 > 15** → 触发架构评审
    （该区域需要造缝，或加大回流力度），防止分叉静默膨胀。
@@ -157,7 +176,7 @@ import { KimiRefreshTokenField } from "@/local/components/KimiRefreshTokenField"
 
 | 上游版本 | 冲突情况 | 处理方式 |
 |---|---|---|
-| patch（与上次 synced 同 major.minor） | 无冲突（或 AI 已全解） | TEST_CMD 绿 → **自动接受并发布**（`AUTO_ACCEPT_PATCH=true`，演练期保持 false） |
+| patch（与上次 synced 同 major.minor） | 无冲突（或 AI 已全解） | 二开聚焦回归 + TEST_CMD 绿 → **自动接受并发布**（`AUTO_ACCEPT_PATCH=true`，演练期保持 false） |
 | patch | 有语义冲突 | 停下待人工（`--continue` / `--abort`） |
 | minor | 任意 | 交互确认（TTY）或写报告待人工；AI 出完整分析 |
 | major / 无 synced 基线的首同步 | — | **人工专项**：`sync.sh` 只做评估出报告，不自动合入 |
@@ -208,11 +227,13 @@ sync 接受（打 `synced/<ver>` 标签并推送 origin）后自动调用 `relea
 |---|---|
 | `sync.sh` | 本地同步编排器：检测→合并→AI 分诊→门禁→决策→打标签→调 release.sh（含 --status/--abort/--continue/--yes/--to/--no-build） |
 | `release.sh` | 本地构建镜像 → 推 model.publib.cn →（可选）NAS 更新与健康检查 |
-| `sync.conf.example` | 全部配置：上游地址/分级策略/TEST_CMD/AI 网关/镜像与 NAS/通知 |
+| `sync.conf.example` | 全部配置：上游地址/分级策略/NODE_BIN/TEST_CMD/AI 网关/镜像与 NAS/通知 |
 | `ai_conflict_triage.mjs` | AI 冲突分诊（triage）+ 上游变更简报（changelog），零依赖 Node ≥18 |
 | `check_local_patches.sh` | 补丁清单自动核对（丢失阻塞 / 可删提示） |
+| `run_fork_regressions.sh` | 校验二开台账与回归清单一一对应，并执行全部聚焦回归 |
 | `divergence_report.sh` | 分叉度 KPI 报告 |
 | `PATCHES.tsv` | 本地补丁登记表（已预填两项已知修复；登记文件同时进入 AI 保护清单） |
+| `REGRESSIONS.tsv` | 二开有效变更 ID 与可执行聚焦回归命令 |
 | `com.omniroute.fork-sync.plist` | launchd 每周定时模板 |
 
 ### 5.2 接入步骤（约 1 天）
@@ -305,9 +326,10 @@ Linux 机器同理（去掉 osascript 通知即可，脚本已容错）。
 |---|---|---|
 | 1 | `UPSTREAM_URL` / `UPSTREAM_TAG_PREFIX` | 已预填官方仓库与 `release/v` 前缀，确认即可 |
 | 2 | `PUSH_AFTER_ACCEPT` | 接受后自动推送 main 与 synced/vendor 标签到 origin（默认 true；临时跳过用 `--no-push`） |
-| 3 | `TEST_CMD` | 本地构建+测试命令（唯一质量闸门，**必须配置**） |
-| 4 | `AI_API_BASE` / `AI_API_KEY` / `AI_MODEL` | OpenAI 兼容网关；不配则冲突全留人工 |
-| 5 | `OMNI_REGISTRY` / `OMNI_IMAGE_PATH` / `OMNI_IMAGE_TAG_SUFFIX` | 按现有镜像命名规则确认（`model.publib.cn/local/omniroute-qodercli:{ver}-qodercli-…`） |
-| 6 | `NAS_SSH_HOST` / `NAS_DIR` / `NAS_HEALTH_URL` | NAS 自动更新；不配则 release.sh 打印手工步骤 |
-| 7 | `AUTO_ACCEPT_PATCH` | 先 false，演练 2~3 个版本后开 |
-| 8 | `SYNC_WEBHOOK_URL` | 可选，机器人通知 |
+| 3 | `NODE_BIN` | Node 22+ 可执行文件；供二开聚焦回归使用，默认 `node` |
+| 4 | `TEST_CMD` | 全局构建+测试命令（与二开聚焦回归共同构成质量闸门，**必须配置**） |
+| 5 | `AI_API_BASE` / `AI_API_KEY` / `AI_MODEL` | OpenAI 兼容网关；不配则冲突全留人工 |
+| 6 | `OMNI_REGISTRY` / `OMNI_IMAGE_PATH` / `OMNI_IMAGE_TAG_SUFFIX` | 按现有镜像命名规则确认（`model.publib.cn/local/omniroute-qodercli:{ver}-qodercli-…`） |
+| 7 | `NAS_SSH_HOST` / `NAS_DIR` / `NAS_HEALTH_URL` | NAS 自动更新；不配则 release.sh 打印手工步骤 |
+| 8 | `AUTO_ACCEPT_PATCH` | 先 false，演练 2~3 个版本后开 |
+| 9 | `SYNC_WEBHOOK_URL` | 可选，机器人通知 |
