@@ -227,6 +227,7 @@ jobs:
 
       - name: Build and push BUN base platform image by digest
         id: build-bun-base
+        if: ${{ vars.ENABLE_BUN_PUBLISH == 'true' }}
         # Bun is a best-effort compatibility target, not a supported runtime
         # (AGENTS.md -> Environment). Its `bun run build` has been OOM-killing on
         # both arches; letting that sink the whole publish means the SUPPORTED
@@ -253,6 +254,7 @@ jobs:
 
       - name: Build and push BUN web platform image by digest
         id: build-bun-web
+        if: ${{ vars.ENABLE_BUN_PUBLISH == 'true' }}
         # Bun is a best-effort compatibility target, not a supported runtime
         # (AGENTS.md -> Environment). Its `bun run build` has been OOM-killing on
         # both arches; letting that sink the whole publish means the SUPPORTED
