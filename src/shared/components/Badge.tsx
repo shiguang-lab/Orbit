@@ -37,7 +37,7 @@ export default function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full font-semibold",
+        "inline-flex items-center gap-1 rounded-full font-semibold",
         variants[variant],
         sizes[size],
         className
@@ -58,7 +58,7 @@ export default function Badge({
         />
       )}
       {icon && (
-        <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+        <span className="material-symbols-outlined text-[12px]" aria-hidden="true">
           {icon}
         </span>
       )}

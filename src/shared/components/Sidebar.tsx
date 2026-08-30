@@ -507,9 +507,9 @@ export default function Sidebar({
             title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
             aria-expanded={!collapsed}
             aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-            className="absolute end-[-20px] top-1/2 z-40 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-surface text-text-muted shadow-lg shadow-black/10 transition-colors hover:bg-surface-2 hover:text-text-main focus:outline-none focus:ring-2 focus:ring-primary/40 dark:shadow-black/30"
+            className="absolute end-[-16px] top-1/2 z-40 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-surface text-text-muted shadow-lg shadow-black/10 transition-colors hover:bg-surface-2 hover:text-text-main focus:outline-none focus:ring-2 focus:ring-primary/40 dark:shadow-black/30"
           >
-            <span className="material-symbols-outlined text-[22px]" aria-hidden="true">
+            <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
               {collapsed ? "chevron_right" : "chevron_left"}
             </span>
           </button>
@@ -586,7 +586,7 @@ export default function Sidebar({
                     </span>
                     <span
                       className={cn(
-                        "material-symbols-outlined ms-auto shrink-0 text-[17px] text-text-muted/55 transition-all duration-200 group-hover/header:text-text-muted",
+                        "material-symbols-outlined ms-auto shrink-0 text-[14px] text-text-muted/55 transition-all duration-200 group-hover/header:text-text-muted",
                         isExpanded && "rotate-180"
                       )}
                       aria-hidden="true"
@@ -610,7 +610,7 @@ export default function Sidebar({
                     )}
                   >
                     <span
-                      className="material-symbols-outlined text-[14px]"
+                      className="material-symbols-outlined text-[12px]"
                       style={{
                         ...(isPinned ? { fontVariationSettings: "'FILL' 1" } : {}),
                       }}

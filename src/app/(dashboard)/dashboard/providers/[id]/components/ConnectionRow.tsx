@@ -530,7 +530,7 @@ export default function ConnectionRow({
     <div
       className={`group flex flex-col gap-3 rounded-lg p-3 transition-colors hover:bg-black/[0.02] dark:hover:bg-white/[0.02] ${connection.isActive === false ? "opacity-60" : ""}`}
     >
-      <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-start xl:gap-5">
+      <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-center xl:gap-5">
         <div className="flex min-w-0 flex-[1_1_560px] items-start gap-3">
           {onToggleSelect && (
             <input
@@ -587,7 +587,7 @@ export default function ConnectionRow({
                       className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-red-500/15 text-red-500"
                       title={t("tokenExpiredTitle", { date: effectiveExpiresAt })}
                     >
-                      <span className="material-symbols-outlined text-[11px]">error</span>
+                      <span className="material-symbols-outlined text-[10px]">error</span>
                       {t("tokenExpiredBadge")}
                     </span>
                   ) : null
@@ -596,7 +596,7 @@ export default function ConnectionRow({
                     className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-amber-500/15 text-amber-500"
                     title={t("tokenExpiresSoonTitle", { minutes: tokenMinsLeft })}
                   >
-                    <span className="material-symbols-outlined text-[11px]">warning</span>
+                    <span className="material-symbols-outlined text-[10px]">warning</span>
                     {`~${tokenMinsLeft}m`}
                   </span>
                 ) : null)}
@@ -627,7 +627,7 @@ export default function ConnectionRow({
                   className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-xs font-medium bg-zinc-500/15 text-zinc-500 dark:bg-zinc-400/15 dark:text-zinc-400"
                   title={t("accountConcurrencyCapLabel")}
                 >
-                  <span className="material-symbols-outlined text-[11px]">dynamic_feed</span>
+                  <span className="material-symbols-outlined text-[10px]">dynamic_feed</span>
                   {connection.maxConcurrent}
                 </span>
               )}
@@ -646,7 +646,7 @@ export default function ConnectionRow({
                     : t("enableRateLimitProtection")
                 }
               >
-                <span className="material-symbols-outlined text-[13px]">shield</span>
+                <span className="material-symbols-outlined text-[11px]">shield</span>
                 {rateLimitEnabled ? t("rateLimitProtected") : t("rateLimitUnprotected")}
               </button>
               {onToggleQuotaVisibility && (
@@ -668,7 +668,7 @@ export default function ConnectionRow({
                     }`}
                     title={t("autoSyncTooltip")}
                   >
-                    <span className="material-symbols-outlined text-[13px]">sync</span>
+                    <span className="material-symbols-outlined text-[11px]">sync</span>
                     {t("autoSyncShort")}
                   </button>
                 </>
@@ -685,7 +685,7 @@ export default function ConnectionRow({
                     }`}
                     title={t("claudeExtraUsageToggleTitle")}
                   >
-                    <span className="material-symbols-outlined text-[13px]">payments</span>
+                    <span className="material-symbols-outlined text-[11px]">payments</span>
                     {t("claudeExtraUsageShort")}{" "}
                     {!claudeBlockExtraUsageEnabled ? t("toggleOnShort") : t("toggleOffShort")}
                   </button>
@@ -742,7 +742,7 @@ export default function ConnectionRow({
                       className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium ${codexServiceTierBadge.className}`}
                       title={codexServiceTierBadge.title}
                     >
-                      <span className="material-symbols-outlined text-[13px]">
+                      <span className="material-symbols-outlined text-[11px]">
                         {codexServiceTierBadge.icon}
                       </span>
                       {codexServiceTierBadge.label}
@@ -757,7 +757,7 @@ export default function ConnectionRow({
                     }`}
                     title={t("codex5hToggleTitle")}
                   >
-                    <span className="material-symbols-outlined text-[13px]">timer</span>
+                    <span className="material-symbols-outlined text-[11px]">timer</span>
                     5h {codex5hEnabled ? t("toggleOnShort") : t("toggleOffShort")}
                   </button>
                   <button
@@ -769,7 +769,7 @@ export default function ConnectionRow({
                     }`}
                     title={t("codexWeeklyToggleTitle")}
                   >
-                    <span className="material-symbols-outlined text-[13px]">date_range</span>
+                    <span className="material-symbols-outlined text-[11px]">date_range</span>
                     {t("weeklyShort")}{" "}
                     {codexWeeklyEnabled ? t("toggleOnShort") : t("toggleOffShort")}
                   </button>
@@ -788,7 +788,7 @@ export default function ConnectionRow({
                     }`}
                     title={proxyEnabled ? t("proxyEnabledTitle") : t("proxyDisabledTitle")}
                   >
-                    <span className="material-symbols-outlined text-[13px]">vpn_lock</span>
+                    <span className="material-symbols-outlined text-[11px]">vpn_lock</span>
                     {proxyEnabled ? <span className="sr-only">{t("proxyOn")}</span> : t("proxyOff")}
                   </button>
                 </>
@@ -814,7 +814,7 @@ export default function ConnectionRow({
                         : t("perKeyProxyDisabledTitle")
                     }
                   >
-                    <span className="material-symbols-outlined text-[13px]">key</span>
+                    <span className="material-symbols-outlined text-[11px]">key</span>
                     {perKeyProxyEnabled ? (
                       t("perKeyProxyOn")
                     ) : (
@@ -847,7 +847,7 @@ export default function ConnectionRow({
                           host: proxyHost || t("configured"),
                         })}
                       >
-                        <span className="material-symbols-outlined text-[13px]">vpn_lock</span>
+                        <span className="material-symbols-outlined text-[11px]">vpn_lock</span>
                         {proxyName || proxyHost || t("proxy")}
                       </span>
                     </>
@@ -856,7 +856,7 @@ export default function ConnectionRow({
             </div>
           </div>
         </div>
-        <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 xl:w-auto xl:flex-[0_1_auto] xl:justify-end xl:pt-0.5 2xl:flex-nowrap">
+        <div className="flex w-full shrink-0 flex-wrap items-center justify-start gap-2 xl:w-auto xl:flex-[0_1_auto] xl:justify-end 2xl:flex-nowrap">
           <Button
             size="sm"
             variant="ghost"
