@@ -1,0 +1,7 @@
+# Fork 专属回归清单（3 列 TAB 分隔）
+# id <TAB> 说明 <TAB> 可在仓库根目录直接执行的命令
+# id 必须出现在 FORK_TODO_CN.md 的“当前有效变更索引”中；同步接受前全部执行。
+FORK-FIX-NARA-MODELS	内置 nara 实时模型发现与失败回退	"$NODE_BIN" --import tsx/esm --import ./open-sse/utils/setupPolyfill.ts --test tests/unit/provider-sweep-live-discovery.test.ts
+FORK-FEAT-KIMI-REFRESH-UI	kimi-web refreshToken 元数据契约	"$NODE_BIN" --import tsx/esm --test tests/unit/web-session-credentials.test.ts
+FORK-OPS-SYNC-KIT	fork 同步脚本语法	bash -n fork-sync-kit/check_local_patches.sh fork-sync-kit/divergence_report.sh fork-sync-kit/release.sh fork-sync-kit/run_fork_regressions.sh fork-sync-kit/sync.sh && "$NODE_BIN" --check fork-sync-kit/ai_conflict_triage.mjs
+FORK-OPS-GHCR-PUBLISH	fork GHCR 命名空间、分支锁豁免与构建内存预算	"$NODE_BIN" --import tsx/esm --test tests/unit/workflows-no-foreign-fork-publishers.test.ts tests/unit/docker-build-memory-budget.test.ts

@@ -15,6 +15,16 @@ test("web session credential metadata covers every web-cookie provider", () => {
 });
 
 test("web session credential metadata identifies cookie, token, and no-auth providers", () => {
+  // Fork regression: kimi-web must expose the rotating refresh_token field in both
+  // connection modals through this shared metadata contract.
+  {
+    const req = webSessionCredentials.getWebSessionCredentialRequirement("kimi-web");
+    assert.ok(req && req.kind === "token");
+    assert.equal(req.credentialName, "access_token");
+    assert.ok(req.storageKeys.includes("access_token"));
+    assert.match(req.refreshToken?.placeholder ?? "", /refresh_token/);
+    assert.match(req.refreshToken?.placeholder ?? "", /auto-renewal/);
+  }
   // Grok needs BOTH sso and sso-rw cookies (#3180). #7567 added the proactive
   // cf_clearance/User-Agent hint — assert its intent, don't freeze operator copy.
   {
