@@ -132,9 +132,7 @@ const nextConfig = {
     // instead of keeping the old generation in control. Falls back to a
     // value that is unique per build run when git is absent (CI tarball).
     NEXT_PUBLIC_SW_BUILD_ID:
-      process.env.OMNIROUTE_SW_BUILD_ID ||
-      process.env.SOURCE_VERSION ||
-      `${Date.now()}`,
+      process.env.OMNIROUTE_SW_BUILD_ID || process.env.SOURCE_VERSION || `${Date.now()}`,
   },
   distDir,
   // Turbopack config: redirect native modules to stubs at build time
@@ -431,10 +429,18 @@ const nextConfig = {
     // The exclusion list is DERIVED from the rewrite table below (self-reference is safe — the
     // config object is fully built by the time Next calls headers()), so a future root-level API
     // alias is excluded automatically instead of silently becoming framable.
+    const configuredRewrites = await nextConfig.rewrites();
+    const rewriteRules = Array.isArray(configuredRewrites)
+      ? configuredRewrites
+      : [
+          ...(configuredRewrites.beforeFiles || []),
+          ...(configuredRewrites.afterFiles || []),
+          ...(configuredRewrites.fallback || []),
+        ];
     const embedRules = buildSecurityHeaderRules({
       mode: dashboardEmbedMode,
       securityHeaders,
-      prefixes: dashboardEmbedMode ? nonPageRoutePrefixes(await nextConfig.rewrites()) : [],
+      prefixes: dashboardEmbedMode ? nonPageRoutePrefixes(rewriteRules) : [],
     });
     return [
       ...embedRules,
@@ -654,8 +660,7 @@ const nextConfig = {
         ]
       : [];
 
-    return [
-      ...localApiProxyRules,
+    const rewriteRules = [
       {
         source: "/chat/completions",
         destination: "/api/v1/chat/completions",
@@ -728,6 +733,9 @@ const nextConfig = {
         destination: "/api/.env",
       },
     ];
+    return devApiProxy
+      ? { beforeFiles: localApiProxyRules, afterFiles: rewriteRules }
+      : rewriteRules;
   },
 };
 
