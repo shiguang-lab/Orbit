@@ -117,7 +117,7 @@ export default function EditConnectionModal({
     maxWaitMs: "",
     rateLimitMaxConcurrent: "",
     apiKey: "",
-    refreshToken: "", // [OMNI] kimi-web-refresh-ui
+    refreshToken: "", // [OMNI] kimi-web-refresh-ui — optional refresh_token input
     healthCheckInterval: 60,
     baseUrl: "",
     targetFormat: "",
@@ -230,6 +230,10 @@ export default function EditConnectionModal({
   const isAwsPolly = provider === "aws-polly";
   const isM365TierCapable = isM365TierCapableProvider(provider);
   const webSessionCredential = getWebSessionCredentialRequirement(provider);
+  const refreshTokenCredential =
+    webSessionCredential && webSessionCredential.kind !== "none"
+      ? webSessionCredential.refreshToken
+      : undefined;
   const isNoAuthWebSessionCredential = webSessionCredential?.kind === "none";
   const isWebSessionCredential = !!webSessionCredential && webSessionCredential.kind !== "none";
   const providerDisplayName =
@@ -337,7 +341,6 @@ export default function EditConnectionModal({
             ? String(connection.rateLimitOverrides.maxConcurrent)
             : "",
         apiKey: "",
-        refreshToken: "", // [OMNI] kimi-web-refresh-ui
         healthCheckInterval: connection.healthCheckInterval ?? 60,
         baseUrl: existingBaseUrl || defaultBaseUrl,
         targetFormat: existingTargetFormat || "",
@@ -1035,13 +1038,13 @@ export default function EditConnectionModal({
             )}
             {/* [OMNI] kimi-web-refresh-ui — optional refresh_token input; the
                 executor renews the access token from it on 401 / before expiry. */}
-            {webSessionCredential?.refreshToken && (
+            {refreshTokenCredential && (
               <Input
                 label={t("refreshTokenOptionalLabel")}
                 type="password"
                 value={formData.refreshToken}
                 onChange={(e) => setFormData({ ...formData, refreshToken: e.target.value })}
-                placeholder={webSessionCredential.refreshToken.placeholder}
+                placeholder={refreshTokenCredential.placeholder}
                 hint={t("refreshTokenOptionalHint")}
                 autoComplete="off"
                 spellCheck={false}
