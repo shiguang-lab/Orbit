@@ -13,6 +13,7 @@ import { requestBodyLimitMbFromEnv } from "@/shared/constants/bodySize";
 import { DEFAULT_RESPONSES_PREVIOUS_RESPONSE_ID_MODE } from "@/shared/constants/responsesPreviousResponseId";
 import { type JsonRecord, toRecord } from "./settings/shared";
 import { resolveNoAuthSharedProviderProxy } from "./settings/noAuthProxyFallback";
+import { APP_CONFIG } from "@/shared/constants/appConfig";
 
 type ProxyValue = JsonRecord | string | null;
 type ProxyResolutionResult = {
@@ -163,6 +164,7 @@ export async function getSettings() {
     maxRetryIntervalSec: 30,
     antigravitySignatureCacheMode: "enabled",
     requireLogin: true,
+    instanceName: APP_CONFIG.name,
     oidcEnabled: false,
     oidcDisablePasswordLogin: false,
     oidcIssuer: "",
@@ -279,6 +281,12 @@ export async function getSettings() {
     } catch {
       settings[key] = rawValue;
     }
+  }
+
+  // Rebrand the legacy default without requiring a database migration. A
+  // deliberately configured custom name remains untouched.
+  if (settings.instanceName === "OmniRoute") {
+    settings.instanceName = APP_CONFIG.name;
   }
 
   if (typeof settings.oidcClientSecret === "string") {

@@ -12,7 +12,6 @@ import {
   toggleExpandedSection,
 } from "@/shared/utils/sidebarExpansionState";
 import { APP_CONFIG } from "@/shared/constants/appConfig";
-import OmniRouteLogo from "./OmniRouteLogo";
 import Button from "./Button";
 import Input from "./Input";
 import { ConfirmModal } from "./Modal";
@@ -479,16 +478,16 @@ export default function Sidebar({
             prefetch={false}
             className={cn("flex min-w-0 items-center", collapsed ? "justify-center" : "gap-2.5")}
           >
-            <div className="flex items-center justify-center size-8 rounded bg-linear-to-br from-[#E54D5E] to-[#C93D4E] shrink-0">
-              {customLogo ? (
-                <img
-                  src={customLogo}
-                  alt={customAppName || APP_CONFIG.name}
-                  className="size-5 object-contain"
-                />
-              ) : (
-                <OmniRouteLogo size={18} className="text-white" />
-              )}
+            <div className="flex items-center justify-center size-8 rounded-lg overflow-hidden bg-[#05081a] shrink-0">
+              <img
+                src={customLogo || APP_CONFIG.logoPath}
+                alt={customAppName || APP_CONFIG.name}
+                className="size-full object-cover"
+                onError={(event) => {
+                  if (event.currentTarget.src.endsWith(APP_CONFIG.logoPath)) return;
+                  event.currentTarget.src = APP_CONFIG.logoPath;
+                }}
+              />
             </div>
             {!collapsed && (
               <div className="flex flex-col min-w-0">

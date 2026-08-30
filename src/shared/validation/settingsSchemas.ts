@@ -118,7 +118,7 @@ export const updateSettingsSchema = z.object({
   enableSocks5Proxy: z.boolean().optional(),
   instanceName: z.string().max(100).optional(),
   customLogoUrl: z.string().max(2000).optional(),
-  customLogoBase64: z.string().max(100000).optional(),
+  customLogoBase64: z.string().max(750000).optional(),
   customFaviconUrl: z.string().max(2000).optional(),
   customFaviconBase64: z.string().max(50000).optional(),
   corsOrigins: z.string().max(500).optional(),

@@ -13,6 +13,8 @@ import {
   type ComboConfigMode,
 } from "@/shared/constants/comboConfigMode";
 import AccountEmailVisibilitySetting from "./AccountEmailVisibilitySetting";
+import { APP_CONFIG } from "@/shared/constants/appConfig";
+import { SIDEBAR_SETTINGS_UPDATED_EVENT } from "@/shared/constants/sidebarVisibility";
 
 export default function AppearanceTab() {
   const { theme, setTheme, isDark } = useTheme();
@@ -83,20 +85,27 @@ export default function AppearanceTab() {
       .catch(() => setLoading(false));
   }, []);
 
-  const updateSetting = async (key: string, value: any) => {
+  const updateSettings = async (updates: Record<string, unknown>) => {
+    const previous = Object.fromEntries(Object.keys(updates).map((key) => [key, settings[key]]));
+    setSettings((prev) => ({ ...prev, ...updates }));
+    window.dispatchEvent(new CustomEvent(SIDEBAR_SETTINGS_UPDATED_EVENT, { detail: updates }));
     try {
       const res = await fetch("/api/settings", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ [key]: value }),
+        body: JSON.stringify(updates),
       });
-      if (res.ok) {
-        setSettings((prev) => ({ ...prev, [key]: value }));
+      if (!res.ok) {
+        throw new Error(`HTTP error ${res.status}`);
       }
     } catch (err) {
-      console.error("Failed to update", key, err);
+      console.error("Failed to update settings", err);
+      setSettings((prev) => ({ ...prev, ...previous }));
+      window.dispatchEvent(new CustomEvent(SIDEBAR_SETTINGS_UPDATED_EVENT, { detail: previous }));
     }
   };
+
+  const updateSetting = (key: string, value: unknown) => updateSettings({ [key]: value });
 
   const presetThemes = [
     { id: "coral", color: COLOR_THEMES.coral, label: t("themeCoral") },
@@ -523,9 +532,9 @@ export default function AppearanceTab() {
               </div>
               <input
                 type="text"
-                value={settings.instanceName || "OmniRoute"}
+                value={settings.instanceName ?? APP_CONFIG.name}
                 onChange={(e) => updateSetting("instanceName", e.target.value)}
-                placeholder="OmniRoute"
+                placeholder={APP_CONFIG.name}
                 maxLength={100}
                 className="h-10 px-3 rounded-lg bg-surface border border-border text-sm text-text-main focus:outline-none focus:border-primary w-48"
               />
@@ -540,7 +549,9 @@ export default function AppearanceTab() {
                 <input
                   type="text"
                   value={settings.customLogoUrl || ""}
-                  onChange={(e) => updateSetting("customLogoUrl", e.target.value)}
+                  onChange={(e) =>
+                    updateSettings({ customLogoUrl: e.target.value, customLogoBase64: "" })
+                  }
                   className="flex-1 h-10 px-3 rounded-lg bg-surface border border-border text-sm text-text-main focus:outline-none focus:border-primary"
                   placeholder="https://example.com/logo.png"
                   maxLength={2000}
@@ -590,7 +601,7 @@ export default function AppearanceTab() {
                         };
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string;
-                          updateSetting("customLogoBase64", base64);
+                          updateSettings({ customLogoBase64: base64, customLogoUrl: "" });
                         };
                         reader.readAsDataURL(file);
                       }
@@ -603,8 +614,7 @@ export default function AppearanceTab() {
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    updateSetting("customLogoUrl", "");
-                    updateSetting("customLogoBase64", "");
+                    updateSettings({ customLogoUrl: "", customLogoBase64: "" });
                   }}
                 >
                   {t("resetLogo")}
@@ -634,7 +644,9 @@ export default function AppearanceTab() {
                 <input
                   type="text"
                   value={settings.customFaviconUrl || ""}
-                  onChange={(e) => updateSetting("customFaviconUrl", e.target.value)}
+                  onChange={(e) =>
+                    updateSettings({ customFaviconUrl: e.target.value, customFaviconBase64: "" })
+                  }
                   className="flex-1 h-10 px-3 rounded-lg bg-surface border border-border text-sm text-text-main focus:outline-none focus:border-primary"
                   placeholder="https://example.com/favicon.ico"
                   maxLength={2000}
@@ -690,7 +702,7 @@ export default function AppearanceTab() {
                         };
                         reader.onload = (event) => {
                           const base64 = event.target?.result as string;
-                          updateSetting("customFaviconBase64", base64);
+                          updateSettings({ customFaviconBase64: base64, customFaviconUrl: "" });
                         };
                         reader.readAsDataURL(file);
                       }
@@ -703,8 +715,7 @@ export default function AppearanceTab() {
                 <Button
                   variant="secondary"
                   onClick={() => {
-                    updateSetting("customFaviconUrl", "");
-                    updateSetting("customFaviconBase64", "");
+                    updateSettings({ customFaviconUrl: "", customFaviconBase64: "" });
                   }}
                 >
                   {t("resetFavicon")}

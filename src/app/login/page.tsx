@@ -5,6 +5,8 @@ import { useTranslations } from "next-intl";
 import { useState, useEffect } from "react";
 import { Button, Input } from "@/shared/components";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { APP_CONFIG } from "@/shared/constants/appConfig";
 
 export default function LoginPage() {
   const t = useTranslations("auth");
@@ -175,7 +177,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-xs text-text-muted/60 mt-8">
-            OmniRoute — {t("unifiedProxy")}
+            {APP_CONFIG.name} — {t("unifiedProxy")}
           </p>
         </div>
       </div>
@@ -215,7 +217,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-center text-xs text-text-muted/60 mt-8">
-            OmniRoute — {t("unifiedAiApiProxy")}
+            {APP_CONFIG.name} — {t("unifiedAiApiProxy")}
           </p>
         </div>
       </div>
@@ -234,11 +236,17 @@ export default function LoginPage() {
           >
             <div className="mb-10">
               <div className="flex items-center gap-3 mb-8">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center">
-                  <span className="material-symbols-outlined text-white text-[20px]">hub</span>
+                <div className="w-10 h-10 rounded-xl overflow-hidden bg-[#05081a] flex items-center justify-center">
+                  <Image
+                    src={APP_CONFIG.logoPath}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="size-full object-cover"
+                  />
                 </div>
                 <span className="text-xl font-semibold text-text-main tracking-tight">
-                  OmniRoute
+                  {APP_CONFIG.name}
                 </span>
               </div>
               <h1 className="text-2xl font-bold text-text-main tracking-tight">{t("signIn")}</h1>

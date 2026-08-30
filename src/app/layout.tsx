@@ -10,6 +10,7 @@ import type { Viewport } from "next";
 import { PwaRegister } from "@/shared/components/PwaRegister";
 import { LocaleAutoDetect } from "@/shared/components/LocaleAutoDetect";
 import { BasePathNetworkProvider } from "@/shared/components/BasePathNetworkProvider";
+import { APP_CONFIG } from "@/shared/constants/appConfig";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -23,13 +24,12 @@ export const viewport: Viewport = {
 
 export async function generateMetadata() {
   const settings = await getSettings();
-  const instanceName = settings?.instanceName || "OmniRoute";
+  const instanceName = settings?.instanceName || APP_CONFIG.name;
   const customFaviconUrl = settings?.customFaviconUrl || settings?.customFaviconBase64;
 
   return {
     title: `${instanceName} — AI Gateway for Multi-Provider LLMs`,
-    description:
-      "OmniRoute is an AI gateway for multi-provider LLMs. One endpoint for all your AI providers.",
+    description: "智枢是一个面向多提供者 LLM 的 AI 网关，一个端点连接您所有的 AI 提供者。",
     manifest: "/manifest.webmanifest",
     applicationName: instanceName,
     appleWebApp: {
@@ -44,9 +44,8 @@ export async function generateMetadata() {
       icon: customFaviconUrl
         ? "/api/settings/favicon"
         : [
-            { url: "/favicon.ico", sizes: "any" },
-            { url: "/favicon.svg", type: "image/svg+xml" },
-            { url: "/icon-512.png", type: "image/png", sizes: "512x512" },
+            { url: APP_CONFIG.faviconPath, type: "image/png", sizes: "64x64" },
+            { url: APP_CONFIG.logoPath, type: "image/png", sizes: "1254x1254" },
           ],
       apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
     },

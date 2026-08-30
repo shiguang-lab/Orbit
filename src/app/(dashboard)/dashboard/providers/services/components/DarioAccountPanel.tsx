@@ -259,7 +259,7 @@ export function DarioAccountPanel() {
             accounts.map((acc) => (
               <div
                 key={acc.alias}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+                className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
                   <p className="text-sm font-mono truncate">{acc.alias}</p>
@@ -275,7 +275,12 @@ export function DarioAccountPanel() {
                       .join(" · ")}
                   </p>
                 </div>
-                <Button size="sm" variant="outline" onClick={() => removeAccount(acc.alias)}>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="shrink-0 self-start sm:self-auto"
+                  onClick={() => removeAccount(acc.alias)}
+                >
                   Remove
                 </Button>
               </div>
@@ -293,7 +298,7 @@ export function DarioAccountPanel() {
           {omniLoading && omniConnections.length === 0 ? (
             <div className="h-8 animate-pulse bg-bg-subtle rounded" />
           ) : omniConnections.length === 0 ? (
-            <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2">
+            <div className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-text-muted">
                 No eligible OmniRoute Claude connections found.
               </p>
@@ -307,7 +312,7 @@ export function DarioAccountPanel() {
             omniConnections.map((c) => (
               <div
                 key={c.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border px-3 py-2"
+                className="flex flex-col gap-2 rounded-lg border border-border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
                   <p className="text-sm truncate">{c.name}</p>
@@ -317,6 +322,7 @@ export function DarioAccountPanel() {
                 </div>
                 <Button
                   size="sm"
+                  className="shrink-0 self-start sm:self-auto"
                   disabled={importBusyId !== null}
                   onClick={() => void importFromOmniroute(c.id)}
                 >

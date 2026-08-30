@@ -1,10 +1,5 @@
 const CACHE_NAME = "omniroute-pwa-v2";
-const APP_SHELL = [
-  "/",
-  "/manifest.webmanifest",
-  "/icon-512.png",
-  "/apple-touch-icon.png",
-];
+const APP_SHELL = ["/", "/manifest.webmanifest", "/icon-512.png", "/apple-touch-icon.png"];
 const EXCLUDED_PATH_PREFIXES = ["/api/", "/a2a", "/dashboard/endpoint"];
 
 self.addEventListener("install", (event) => {
@@ -117,10 +112,10 @@ self.addEventListener("push", (event) => {
   try {
     data = event.data ? event.data.json() : {};
   } catch {
-    data = { title: "OmniRoute", body: event.data?.text() || "New notification" };
+    data = { title: "智枢", body: event.data?.text() || "New notification" };
   }
 
-  const title = data.title || "OmniRoute";
+  const title = data.title || "智枢";
   const options = {
     body: data.body || "",
     icon: data.icon || "/icon-512.png",
