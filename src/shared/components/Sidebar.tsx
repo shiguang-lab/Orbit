@@ -394,14 +394,14 @@ export default function Sidebar({
   const renderNavLink = (item) => {
     const active = !item.external && activeHref === item.href;
     const className = cn(
-      "flex items-center gap-3 rounded-lg transition-all group",
-      collapsed ? "min-h-10 justify-center px-2 py-2.5" : "min-h-10 px-3 py-2",
+      "group flex items-center gap-3 rounded-lg transition-all",
+      collapsed ? "min-h-10 justify-center px-2 py-2.5" : "min-h-11 px-3 py-2.5",
       active
         ? "bg-primary/10 text-primary"
         : "text-text-muted hover:bg-surface/50 hover:text-text-main"
     );
     const iconClassName = cn(
-      "material-symbols-outlined text-[18px] shrink-0",
+      "material-symbols-outlined shrink-0 text-[20px]",
       active ? "fill-1" : "group-hover:text-primary transition-colors"
     );
     const content = (
@@ -413,7 +413,9 @@ export default function Sidebar({
           <div className="flex min-w-0 flex-col">
             <span className="truncate text-sm font-medium">{item.label}</span>
             {item.subtitle && (
-              <span className="truncate text-[10px] text-text-muted/60">{item.subtitle}</span>
+              <span className="truncate text-[11px] leading-4 text-text-muted/65">
+                {item.subtitle}
+              </span>
             )}
           </div>
         )}
@@ -460,7 +462,7 @@ export default function Sidebar({
         ref={sidebarRef}
         className={cn(
           "flex h-full min-h-0 flex-col border-r border-black/5 bg-sidebar transition-all duration-300 ease-in-out dark:border-white/5",
-          collapsed ? "w-16" : "w-[220px]"
+          collapsed ? "w-16" : "w-[min(88vw,260px)]"
         )}
         style={{ paddingTop: isMacElectron ? "var(--desktop-safe-top)" : undefined }}
       >
@@ -471,48 +473,11 @@ export default function Sidebar({
           {t("skipToContent")}
         </a>
 
-        {(onToggleCollapse || !isMacElectron) && (
-          <div
-            className={cn(
-              "flex items-center gap-2 pb-2",
-              isMacElectron ? "pt-3" : "pt-5",
-              collapsed ? "px-3 justify-center" : "px-4"
-            )}
-            aria-hidden="true"
-          >
-            {!isMacElectron && (
-              <>
-                <div className="w-3 h-3 rounded-full bg-[#FF5F56]" />
-                <div className="w-3 h-3 rounded-full bg-[#FFBD2E]" />
-                <div className="w-3 h-3 rounded-full bg-[#27C93F]" />
-              </>
-            )}
-            {!collapsed && <div className="flex-1" />}
-            {onToggleCollapse && (
-              <button
-                onClick={onToggleCollapse}
-                title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-                aria-expanded={!collapsed}
-                aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
-                className={cn(
-                  "rounded-md p-1 text-text-muted/50 transition-colors hover:bg-black/5 hover:text-text-muted dark:hover:bg-white/5",
-                  collapsed && !isMacElectron && "mt-2",
-                  isMacElectron && "ms-auto"
-                )}
-              >
-                <span className="material-symbols-outlined text-[16px]" aria-hidden="true">
-                  {collapsed ? "chevron_right" : "chevron_left"}
-                </span>
-              </button>
-            )}
-          </div>
-        )}
-
-        <div className={cn("py-3", collapsed ? "px-2" : "px-4")}>
+        <div className={cn("relative", collapsed ? "px-2 pb-3 pt-10" : "px-4 pb-3 pt-4")}>
           <Link
             href="/home"
             prefetch={false}
-            className={cn("flex items-center", collapsed ? "justify-center" : "gap-2.5")}
+            className={cn("flex min-w-0 items-center", collapsed ? "justify-center" : "gap-2.5")}
           >
             <div className="flex items-center justify-center size-8 rounded bg-linear-to-br from-[#E54D5E] to-[#C93D4E] shrink-0">
               {customLogo ? (
@@ -527,13 +492,29 @@ export default function Sidebar({
             </div>
             {!collapsed && (
               <div className="flex flex-col min-w-0">
-                <h1 className="text-sm font-semibold tracking-tight text-text-main truncate">
+                <h1 className="truncate text-base font-semibold tracking-tight text-text-main">
                   {customAppName || APP_CONFIG.name}
                 </h1>
-                <span className="text-[10px] text-text-muted">v{APP_CONFIG.version}</span>
+                <span className="text-xs text-text-muted">v{APP_CONFIG.version}</span>
               </div>
             )}
           </Link>
+          {onToggleCollapse && (
+            <button
+              onClick={onToggleCollapse}
+              title={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+              aria-expanded={!collapsed}
+              aria-label={collapsed ? t("expandSidebar") : t("collapseSidebar")}
+              className={cn(
+                "absolute rounded-md p-1.5 text-text-muted/65 transition-colors hover:bg-black/5 hover:text-text-main dark:hover:bg-white/5",
+                collapsed ? "end-1.5 top-2" : "end-2 top-3"
+              )}
+            >
+              <span className="material-symbols-outlined text-[18px]" aria-hidden="true">
+                {collapsed ? "chevron_right" : "chevron_left"}
+              </span>
+            </button>
+          )}
         </div>
 
         {!collapsed && (
@@ -546,7 +527,7 @@ export default function Sidebar({
               aria-label={tc("search")}
               icon="search"
               className="gap-0"
-              inputClassName="py-1.5 text-xs"
+              inputClassName="py-2 text-sm"
             />
           </div>
         )}
@@ -594,59 +575,51 @@ export default function Sidebar({
             // Expanded mode: collapsible section with pin
             return (
               <div key={section.id} className={isFirst ? "space-y-0.5" : "mt-2"}>
-                <div
-                  className="flex items-center gap-0.5 px-2 py-1 rounded-md hover:bg-surface/30 transition-colors cursor-pointer group/header"
-                  onClick={() => toggleSection(sectionId)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      toggleSection(sectionId);
-                    }
-                  }}
-                  role="button"
-                  tabIndex={0}
-                  aria-expanded={isExpanded}
-                  aria-controls={`sidebar-section-${sectionId}`}
-                >
-                  <span className="flex-1 text-[10px] font-semibold text-text-muted/60 uppercase tracking-wider group-hover/header:text-text-muted/90 transition-colors">
-                    {section.title}
-                  </span>
-
-                  {/* Pin button — right side near chevron */}
+                <div className="group/header flex min-h-9 items-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-surface/30">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    type="button"
+                    onClick={() => toggleSection(sectionId)}
+                    aria-expanded={isExpanded}
+                    aria-controls={`sidebar-section-${sectionId}`}
+                    className="flex min-w-0 flex-1 items-center gap-2 text-start"
+                  >
+                    <span className="truncate text-xs font-semibold tracking-wide text-text-muted/80 transition-colors group-hover/header:text-text-main">
+                      {section.title}
+                    </span>
+                    <span
+                      className={cn(
+                        "material-symbols-outlined ms-auto shrink-0 text-[17px] text-text-muted/55 transition-all duration-200 group-hover/header:text-text-muted",
+                        isExpanded && "rotate-180"
+                      )}
+                      aria-hidden="true"
+                    >
+                      expand_more
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => {
                       togglePin(sectionId);
                     }}
                     aria-label={isPinned ? t("unpinSection") : t("pinSectionOpen")}
                     type="button"
                     title={isPinned ? t("unpinSection") : t("pinSectionOpen")}
                     className={cn(
-                      "p-0.5 rounded transition-all shrink-0",
+                      "shrink-0 rounded p-1 transition-all",
                       isPinned
                         ? "text-primary opacity-100"
-                        : "text-text-muted/30 opacity-0 group-hover/header:opacity-100 hover:text-text-muted/70"
+                        : "text-text-muted/45 opacity-100 hover:text-text-muted"
                     )}
                   >
                     <span
-                      className="material-symbols-outlined"
+                      className="material-symbols-outlined text-[14px]"
                       style={{
-                        fontSize: "10px",
                         ...(isPinned ? { fontVariationSettings: "'FILL' 1" } : {}),
                       }}
                     >
                       push_pin
                     </span>
                   </button>
-
-                  <span
-                    className={cn(
-                      "material-symbols-outlined text-[14px] text-text-muted/40 transition-all duration-200 group-hover/header:text-text-muted/70 shrink-0",
-                      isExpanded && "rotate-180"
-                    )}
-                  >
-                    expand_more
-                  </span>
                 </div>
 
                 {isExpanded && (
@@ -658,9 +631,9 @@ export default function Sidebar({
                         return (
                           <div key={child.id} className={separatorHidden ? "mt-0.5" : "mt-2"}>
                             {!separatorHidden && (
-                              <div className="flex items-center gap-1.5 px-2 py-0.5 mb-0.5">
-                                <div className="h-px flex-1 bg-black/8 dark:bg-white/8" />
-                                <span className="text-[8px] font-semibold text-text-muted/40 uppercase tracking-widest">
+                              <div className="mb-1 flex items-center gap-2 px-2 py-1">
+                                <div className="h-px flex-1 bg-black/10 dark:bg-white/10" />
+                                <span className="text-[11px] font-medium tracking-wide text-text-muted/65">
                                   {child.title}
                                 </span>
                               </div>
@@ -692,26 +665,28 @@ export default function Sidebar({
           <button
             onClick={() => setShowRestartModal(true)}
             title={t("restart")}
+            aria-label={t("restart")}
             className={cn(
               "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
               "text-amber-500 hover:bg-amber-500/10 border border-amber-500/20 hover:border-amber-500/40",
-              collapsed ? "p-2" : "flex-1 min-w-0 px-2 py-1.5 text-xs"
+              collapsed ? "p-2" : "min-w-0 flex-1 px-2 py-2 text-sm"
             )}
           >
             <span className="material-symbols-outlined text-[16px]">restart_alt</span>
-            {!collapsed && <span className="truncate">{t("restart")}</span>}
+            {!collapsed && <span className="whitespace-nowrap">{t("restart")}</span>}
           </button>
           <button
             onClick={() => setShowShutdownModal(true)}
             title={t("shutdown")}
+            aria-label={t("shutdown")}
             className={cn(
               "flex items-center justify-center gap-2 rounded-lg font-medium transition-all",
               "text-red-500 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/40",
-              collapsed ? "p-2" : "flex-1 min-w-0 px-2 py-1.5 text-xs"
+              collapsed ? "p-2" : "min-w-0 flex-1 px-2 py-2 text-sm"
             )}
           >
             <span className="material-symbols-outlined text-[16px]">power_settings_new</span>
-            {!collapsed && <span className="truncate">{t("shutdown")}</span>}
+            {!collapsed && <span className="whitespace-nowrap">{t("shutdown")}</span>}
           </button>
         </div>
       </aside>
