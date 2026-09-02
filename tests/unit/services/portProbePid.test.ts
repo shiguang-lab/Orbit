@@ -16,6 +16,7 @@ import path from "node:path";
 import {
   parseLsofPid,
   parseNetstatPid,
+  parseProcNetSocketInodes,
   parseSsPid,
   parseWindowsNetstatPid,
   resolvePortPid,
@@ -52,6 +53,17 @@ test("parseSsPid returns null when ss reports no process column", () => {
   // no users:(...) column, which must not be read as a match.
   assert.equal(parseSsPid("LISTEN 0 511 127.0.0.1:20128 0.0.0.0:*\n"), null);
   assert.equal(parseSsPid(""), null);
+});
+
+test("parseProcNetSocketInodes finds listening socket inodes by port", () => {
+  const stdout = [
+    "  sl  local_address rem_address   st tx_queue rx_queue tr tm->when retrnsmt   uid  timeout inode",
+    "   0: 0100007F:207D 00000000:0000 0A 00000000:00000000 00:00000000 00000000   100        0 424242 1 0000000000000000 100 0 0 10 0",
+    "   1: 0100007F:1F90 00000000:0000 01 00000000:00000000 00:00000000 00000000   100        0 999999 1 0000000000000000 20 4 30 10 -1",
+    "",
+  ].join("\n");
+  assert.deepEqual([...parseProcNetSocketInodes(stdout, 8317)], ["424242"]);
+  assert.deepEqual([...parseProcNetSocketInodes(stdout, 8080)], []);
 });
 
 test("parseNetstatPid matches on the local address, not the foreign one", () => {

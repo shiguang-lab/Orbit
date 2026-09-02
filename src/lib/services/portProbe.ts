@@ -15,6 +15,7 @@
 
 import { createConnection } from "node:net";
 import { spawn } from "node:child_process";
+import { readdir, readFile, readlink } from "node:fs/promises";
 import os from "node:os";
 
 /** Result of probing the service before spawning. */
@@ -32,6 +33,9 @@ export type PreSpawnDecision =
 const HEALTH_PROBE_TIMEOUT_MS = 3_000;
 const PORT_PROBE_TIMEOUT_MS = 1_000;
 const PID_RESOLVE_TIMEOUT_MS = 2_000;
+
+/** Linux TCP state used by /proc/net/tcp* for listening sockets. */
+const TCP_LISTEN_STATE = "0A";
 
 /**
  * Decide what to do before spawning, given a probe of the port + health.
@@ -295,6 +299,77 @@ function runPidProbe(
 }
 
 /**
+ * Parse Linux /proc/net/tcp* rows and return socket inodes listening on a port.
+ * The inode is the stable link between a kernel socket and /proc/<pid>/fd.
+ */
+export function parseProcNetSocketInodes(stdout: string, port: number): Set<string> {
+  const inodes = new Set<string>();
+
+  for (const line of stdout.split("\n")) {
+    const columns = line.trim().split(/\s+/);
+    // sl local_address rem_address st ... inode
+    if (columns.length < 10 || columns[3] !== TCP_LISTEN_STATE) continue;
+    const localPort = columns[1]?.split(":")[1];
+    if (!localPort || Number.parseInt(localPort, 16) !== port) continue;
+    const inode = columns[9];
+    if (/^\d+$/.test(inode)) inodes.add(inode);
+  }
+
+  return inodes;
+}
+
+/**
+ * Resolve a listening socket to its process without external tools. Slim
+ * container images often omit lsof/ss/netstat, but Linux still exposes the
+ * socket inode in /proc/net/tcp and the owning fd in /proc/<pid>/fd.
+ */
+async function resolveProcfsPortPid(port: number): Promise<number | null> {
+  if (os.platform() !== "linux") return null;
+
+  try {
+    const contents = await Promise.all(
+      ["/proc/net/tcp", "/proc/net/tcp6"].map(async (file) => {
+        try {
+          return await readFile(file, "utf8");
+        } catch {
+          return "";
+        }
+      })
+    );
+    const inodes = new Set<string>();
+    for (const content of contents) {
+      for (const inode of parseProcNetSocketInodes(content, port)) inodes.add(inode);
+    }
+    if (inodes.size === 0) return null;
+
+    const processes = await readdir("/proc");
+    for (const entry of processes) {
+      if (!/^\d+$/.test(entry)) continue;
+      let fds: string[];
+      try {
+        fds = await readdir(`/proc/${entry}/fd`);
+      } catch {
+        continue;
+      }
+      for (const fd of fds) {
+        let target: string;
+        try {
+          target = await readlink(`/proc/${entry}/fd/${fd}`);
+        } catch {
+          continue;
+        }
+        const match = /^socket:\[(\d+)\]$/.exec(target);
+        if (match && inodes.has(match[1])) return Number.parseInt(entry, 10);
+      }
+    }
+  } catch {
+    // /proc may be unavailable or access-restricted; PID resolution is best effort.
+  }
+
+  return null;
+}
+
+/**
  * Resolve the pid of whatever process is listening on `port`, if any.
  *
  * Used when adopting an already-healthy instance (see `decidePreSpawn`'s
@@ -315,6 +390,18 @@ export async function resolvePortPid(port: number): Promise<number | null> {
 
   for (const probe of PID_PROBES) {
     const pid = await runPidProbe(probe, port, deadline - Date.now());
+    if (pid !== null) return pid;
+  }
+
+  const remainingMs = deadline - Date.now();
+  if (remainingMs > 0) {
+    const procfs = resolveProcfsPortPid(port);
+    let timeoutHandle: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<number | null>((resolve) => {
+      timeoutHandle = setTimeout(() => resolve(null), remainingMs);
+    });
+    const pid = await Promise.race([procfs, timeout]);
+    if (timeoutHandle) clearTimeout(timeoutHandle);
     if (pid !== null) return pid;
   }
 

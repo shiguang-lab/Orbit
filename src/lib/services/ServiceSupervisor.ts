@@ -303,7 +303,16 @@ export class ServiceSupervisor extends EventEmitter {
 
   private async killChild(): Promise<void> {
     const child = this.childProcess;
-    if (!child || child.killed) return;
+    if (!child) {
+      // Adopted services have no ChildProcess handle because this supervisor
+      // did not spawn them. They still belong to the lifecycle once adopted,
+      // so stop/restart and SIGTERM shutdown must terminate the tracked PID.
+      if (this.adopted && this.pid !== null) {
+        await this.killAdoptedPid(this.pid, this.config.stopTimeoutMs);
+      }
+      return;
+    }
+    if (child.killed) return;
 
     child.kill("SIGTERM");
 
