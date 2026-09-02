@@ -7,6 +7,7 @@ import {
 } from "@/lib/services/installers/cliproxy";
 import { createErrorResponse } from "@/lib/api/errorResponse";
 import { sanitizeErrorMessage } from "@omniroute/open-sse/utils/error";
+import { resolvePortPid } from "@/lib/services/portProbe";
 
 const TOOL = "cliproxy";
 
@@ -15,7 +16,24 @@ export async function GET(): Promise<Response> {
     const sup = getSupervisor(TOOL);
     const row = await getServiceRow(TOOL);
 
-    const liveStatus = sup?.getStatus() ?? null;
+    let liveStatus = sup?.getStatus() ?? null;
+    // Next.js can load this route in a separate server bundle from the
+    // instrumentation bootstrap, so its in-memory registry may be empty even
+    // while the embedded process is healthy. Resolve the port holder as a
+    // fallback instead of reporting a running service with pid=null.
+    if (!liveStatus && row?.status === "running") {
+      const pid = await resolvePortPid(row.port);
+      liveStatus = {
+        tool: TOOL,
+        state: "running",
+        pid,
+        port: row.port,
+        health: "unknown",
+        startedAt: null,
+        lastError: row.errorMessage,
+        adopted: true,
+      };
+    }
     const installedVersion = await getInstalledVersion();
     const latestVersion = await getLatestVersion();
 
