@@ -6,6 +6,18 @@ import { resolvePortPid } from "@/lib/services/portProbe";
 
 const TOOL = "cliproxy";
 
+async function waitForProcessExit(pid: number, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      process.kill(pid, 0);
+    } catch {
+      return;
+    }
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+}
+
 export async function POST(): Promise<Response> {
   try {
     const row = await getServiceRow(TOOL);
@@ -26,6 +38,7 @@ export async function POST(): Promise<Response> {
         } catch {
           // The process may have exited between lookup and signal delivery.
         }
+        await waitForProcessExit(pid, 15_000);
       }
       await sup.stop();
       status = await sup.start();
