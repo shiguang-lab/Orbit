@@ -320,8 +320,9 @@ export class ServiceSupervisor extends EventEmitter {
       // Adopted services have no ChildProcess handle because this supervisor
       // did not spawn them. They still belong to the lifecycle once adopted,
       // so stop/restart and SIGTERM shutdown must terminate the tracked PID.
-      if (this.adopted && this.pid !== null) {
-        await this.killAdoptedPid(this.pid, this.config.stopTimeoutMs);
+      if (this.adopted) {
+        const adoptedPid = this.pid ?? (await resolvePortPid(this.config.port));
+        if (adoptedPid !== null) await this.killAdoptedPid(adoptedPid, this.config.stopTimeoutMs);
       }
       return;
     }
