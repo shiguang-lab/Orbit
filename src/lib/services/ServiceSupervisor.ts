@@ -97,7 +97,20 @@ export class ServiceSupervisor extends EventEmitter {
 
   async start(): Promise<ServiceStatus> {
     return this.withLock(async () => {
-      if (this.state === "running" || this.state === "starting") {
+      if (this.state === "running") {
+        // A route module can observe a supervisor that adopted a healthy
+        // listener before the port PID was resolvable. Refresh that missing
+        // PID before returning so a subsequent restart can terminate it.
+        if (this.adopted && this.pid === null) {
+          const resolvedPid = await resolvePortPid(this.config.port);
+          if (resolvedPid !== null) {
+            this.pid = resolvedPid;
+            await setToolStatus(this.config.tool, "running", resolvedPid);
+          }
+        }
+        return this.getStatus();
+      }
+      if (this.state === "starting") {
         return this.getStatus();
       }
 
