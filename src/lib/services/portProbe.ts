@@ -386,6 +386,14 @@ async function resolveProcfsPortPid(port: number): Promise<number | null> {
  * still costs at most `PID_RESOLVE_TIMEOUT_MS`.
  */
 export async function resolvePortPid(port: number): Promise<number | null> {
+  // Prefer the procfs resolver on Linux. In slim containers every external
+  // probe may be absent, and spending the shared deadline on four ENOENT
+  // subprocesses can leave no time to inspect /proc.
+  if (os.platform() === "linux") {
+    const procfs = await resolveProcfsPortPid(port);
+    if (procfs !== null) return procfs;
+  }
+
   const deadline = Date.now() + PID_RESOLVE_TIMEOUT_MS;
 
   for (const probe of PID_PROBES) {
