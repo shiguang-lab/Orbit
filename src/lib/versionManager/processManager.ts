@@ -39,9 +39,12 @@ async function writeConfig(
   overrides?: Record<string, unknown>
 ): Promise<string> {
   await fs.mkdir(configDir, { recursive: true });
+  const authDir = path.join(configDir, "auth");
+  await fs.mkdir(authDir, { recursive: true });
   const configPath = path.join(configDir, "config.yaml");
   const config = `port: ${port}
 host: 127.0.0.1
+auth-dir: ${authDir}
 log_level: warn
 `;
   await fs.writeFile(configPath, config);
@@ -66,7 +69,14 @@ export async function startProcess(
   const child = spawn(
     binaryPath,
     ["-c", path.join(actualConfigDir, "config.yaml")],
-    buildCliproxyapiSpawnOptions()
+    {
+      ...buildCliproxyapiSpawnOptions(),
+      env: {
+        ...process.env,
+        CLIPROXYAPI_AUTH_DIR: path.join(actualConfigDir, "auth"),
+        CLIPROXYAPI_CONFIG_DIR: actualConfigDir,
+      },
+    }
   );
 
   child.stdout?.on("data", () => {});

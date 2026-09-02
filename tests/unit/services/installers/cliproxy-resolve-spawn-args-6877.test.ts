@@ -105,10 +105,13 @@ describe("resolveSpawnArgs (#6877 — real filesystem)", () => {
     assert.ok(fs.existsSync(configPath), "config.yaml must be created on first run");
 
     const content = fs.readFileSync(configPath, "utf8");
-    assert.equal(content, `port: ${port}\nhost: 127.0.0.1\nlog_level: warn\n`);
+    assert.equal(
+      content,
+      `port: ${port}\nhost: 127.0.0.1\nauth-dir: ${path.join(dataDir, "services", "cliproxy", "auth")}\nlog_level: warn\n`
+    );
   });
 
-  it("preserves a pre-existing config.yaml byte-for-byte instead of overwriting it", async () => {
+  it("preserves a pre-existing config.yaml and adds the persistent auth directory", async () => {
     const { resolveSpawnArgs } =
       await import("../../../../src/lib/services/installers/cliproxy.ts");
 
@@ -122,10 +125,7 @@ describe("resolveSpawnArgs (#6877 — real filesystem)", () => {
     resolveSpawnArgs(8317);
 
     const contentAfter = fs.readFileSync(configPath, "utf8");
-    assert.equal(
-      contentAfter,
-      customContent,
-      "resolveSpawnArgs must not clobber an existing, operator-customized config.yaml"
-    );
+    assert.equal(contentAfter.replace(/auth-dir: .*\n/, ""), customContent);
+    assert.match(contentAfter, new RegExp(`^auth-dir: ${path.join(dataDir, "services", "cliproxy", "auth")}\\n`, "m"));
   });
 });

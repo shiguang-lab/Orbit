@@ -22,6 +22,7 @@ export const CLIPROXY_DEFAULT_PORT = 8317;
 
 const BIN_DIR = path.join(DATA_DIR, "bin");
 const CONFIG_DIR = path.join(DATA_DIR, "services", "cliproxy");
+const AUTH_DIR = path.join(CONFIG_DIR, "auth");
 
 let latestVersionCache: { value: string; expiresAt: number } | null = null;
 const VERSION_CACHE_TTL_MS = 3_600_000;
@@ -111,12 +112,24 @@ export function resolveSpawnArgs(port: number, managementKey?: string): SpawnArg
   const symlinkPath = path.join(BIN_DIR, executableName);
 
   fs.mkdirSync(CONFIG_DIR, { recursive: true });
+  fs.mkdirSync(AUTH_DIR, { recursive: true });
   const configPath = path.join(CONFIG_DIR, "config.yaml");
   if (!fs.existsSync(configPath)) {
-    fs.writeFileSync(configPath, `port: ${port}\nhost: 127.0.0.1\nlog_level: warn\n`, "utf8");
+    fs.writeFileSync(
+      configPath,
+      `port: ${port}\nhost: 127.0.0.1\nauth-dir: ${AUTH_DIR}\nlog_level: warn\n`,
+      "utf8"
+    );
+  } else {
+    const config = fs.readFileSync(configPath, "utf8");
+    if (!/^\s*auth-dir\s*:/m.test(config)) {
+      fs.appendFileSync(configPath, `auth-dir: ${AUTH_DIR}\n`, "utf8");
+    }
   }
 
   const env = { ...process.env };
+  env.CLIPROXYAPI_AUTH_DIR = AUTH_DIR;
+  env.CLIPROXYAPI_CONFIG_DIR = CONFIG_DIR;
   if (managementKey) env.MANAGEMENT_PASSWORD = managementKey;
   return {
     command: symlinkPath,
