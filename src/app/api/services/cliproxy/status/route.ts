@@ -21,18 +21,22 @@ export async function GET(): Promise<Response> {
     // instrumentation bootstrap, so its in-memory registry may be empty even
     // while the embedded process is healthy. Resolve the port holder as a
     // fallback instead of reporting a running service with pid=null.
-    if (!liveStatus && row?.status === "running") {
+    if (row?.status === "running" && (!liveStatus || liveStatus.pid === null)) {
       const pid = await resolvePortPid(row.port);
-      liveStatus = {
-        tool: TOOL,
-        state: "running",
-        pid,
-        port: row.port,
-        health: "unknown",
-        startedAt: null,
-        lastError: row.errorMessage,
-        adopted: true,
-      };
+      if (pid !== null) {
+        liveStatus = liveStatus
+          ? { ...liveStatus, pid }
+          : {
+              tool: TOOL,
+              state: "running",
+              pid,
+              port: row.port,
+              health: "unknown",
+              startedAt: null,
+              lastError: row.errorMessage,
+              adopted: true,
+            };
+      }
     }
     const installedVersion = await getInstalledVersion();
     const latestVersion = await getLatestVersion();
