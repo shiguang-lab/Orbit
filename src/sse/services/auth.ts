@@ -725,6 +725,12 @@ async function loadNoAuthProviderSpecificData(providerId: string): Promise<JsonR
   }
 }
 function providerCanUseSyntheticNoAuthFallback(providerId: string): boolean {
+  // The embedded CLIProxyAPI data plane is intentionally exposed without a
+  // separate OmniRoute provider key. Its own upstream account credentials are
+  // managed by CLIProxyAPI, so normal routing must still be able to select it
+  // when no provider_connections row exists in OmniRoute.
+  if (providerId === "cliproxyapi") return true;
+
   const providerDef = getProviderById(providerId) as
     AnonymousFallbackProviderDefinition | undefined;
   const noAuthProviderDef = (

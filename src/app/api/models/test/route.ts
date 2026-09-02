@@ -90,7 +90,13 @@ export async function POST(request: Request) {
     if (result.rateLimited) body.rateLimited = true;
     if (result.retryAfter !== undefined) body.retryAfter = result.retryAfter;
 
-    return NextResponse.json(body, { status: result.httpStatus });
+    // Management auth already succeeded above. A 401 returned by the model
+    // probe is therefore an upstream/provider credential failure, not an
+    // expired dashboard session. Keep the original status in the JSON body
+    // for diagnostics, but use a gateway status so clients do not redirect to
+    // the login page.
+    const responseStatus = result.httpStatus === 401 ? 502 : result.httpStatus;
+    return NextResponse.json(body, { status: responseStatus });
   } catch (error: unknown) {
     return NextResponse.json(
       {

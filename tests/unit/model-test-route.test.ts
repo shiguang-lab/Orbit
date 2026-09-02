@@ -146,3 +146,24 @@ test("model test route ignores forwarded hosts and works in strict API-key mode"
   assert.equal(fetchCalls.length, 1);
   assert.match(fetchCalls[0], /\/chat\/completions$/);
 });
+
+test("model test maps upstream 401 to a gateway error instead of dashboard login", async () => {
+  globalThis.fetch = async () =>
+    Response.json(
+      { error: { message: "No active credentials for provider: cliproxyapi" } },
+      { status: 401 }
+    );
+
+  const response = await route.POST(
+    await makeManagementSessionRequest("http://localhost/api/models/test", {
+      method: "POST",
+      body: { providerId: "cliproxyapi", modelId: "gpt-5.6-terra" },
+    })
+  );
+  const body = (await response.json()) as any;
+
+  assert.equal(response.status, 502);
+  assert.equal(body.status, "error");
+  assert.equal(body.statusCode, 401);
+  assert.match(body.error, /credentials/i);
+});
